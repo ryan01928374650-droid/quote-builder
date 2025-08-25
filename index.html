@@ -2,52 +2,775 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SBX Quote Builder</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>SBX Accountants — Smart Quote Builder</title>
 
-  <!-- Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
-
-  <!-- TailwindCSS CDN -->
+  <!-- Tailwind config MUST be defined before CDN script -->
+  <script>
+    window.tailwind = { config: {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Montserrat','ui-sans-serif','system-ui'] },
+          colors: {
+            sbx: { blue:'#004aac', blueDark:'#003b8a', grey:'#f6f7fb', ink:'#111827' }
+          },
+          boxShadow: { soft:'0 10px 30px -12px rgba(0,0,0,0.15)' },
+          borderRadius: { xl2:'1.25rem' }
+        }
+      }
+    }};
+  </script>
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- React + ReactDOM (UMD builds) -->
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
-  <!-- Babel for JSX support -->
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    body {
-      font-family: 'Montserrat', sans-serif;
-      background: #f8fafc;
-      margin: 0;
-      padding: 2rem;
+    :root{ --sbx-blue:#004aac; }
+    html,body{ background:#f7f9fc; }
+    /* Print only the quote card */
+    @media print{
+      body *{ visibility:hidden !important; }
+      #printArea, #printArea *{ visibility:visible !important; }
+      #printArea{ position:absolute; inset:0; box-shadow:none !important; margin:0 !important; }
+      .no-print{ display:none !important; }
     }
+    input[type=number]::-webkit-outer-spin-button,
+    input[type=number]::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
+    input[type=number]{ -moz-appearance:textfield; }
   </style>
 </head>
-<body>
-  <!-- React Root -->
-  <div id="root"></div>
-
-  <!-- React App -->
-  <script type="text/babel">
-    const App = () => {
-      return (
-        <div className="text-center mt-20">
-          <h1 className="text-3xl font-bold text-[#004aac]">
-            SBX Quote Builder Loaded ✅
-          </h1>
-          <p className="mt-4 text-gray-600">
-            If you can see this, React + Tailwind are working.
-          </p>
+<body class="font-sans text-sbx-ink">
+  <div class="max-w-6xl mx-auto p-4 md:p-8">
+    <header class="no-print mb-6">
+      <div class="bg-sbx-blue text-white rounded-xl2 p-5 flex items-center justify-between shadow-soft">
+        <div>
+          <h1 class="text-2xl md:text-3xl font-bold">SBX Smart Quote Builder</h1>
+          <p class="text-white/90">Simple questions → tailored pricing. We only ask what matters.</p>
         </div>
-      );
-    };
+        <div class="hidden md:flex items-center gap-3">
+          <span class="px-3 py-2 rounded-lg bg-white/10">Trades bundle</span>
+          <span class="px-3 py-2 rounded-lg bg-white/10">4 months free bookkeeping</span>
+        </div>
+      </div>
+    </header>
 
-    const root = ReactDOM.createRoot(document.getElementById("root"));
-    root.render(<App />);
+    <div class="grid lg:grid-cols-5 gap-6">
+      <!-- LEFT: form -->
+      <div class="lg:col-span-3 space-y-6" id="formRoot">
+        <!-- Who -->
+        <section class="bg-white rounded-xl2 shadow-soft p-5 md:p-7">
+          <h2 class="text-lg md:text-xl font-semibold text-sbx-blue mb-4">Who is this for?</h2>
+          <div class="grid gap-2">
+            <label class="border rounded-lg px-3 py-2 flex items-center gap-3 cursor-pointer">
+              <input type="radio" name="type" value="company" class="accent-[var(--sbx-blue)]" checked>
+              <div><div class="font-medium">Limited company</div></div>
+            </label>
+            <label class="border rounded-lg px-3 py-2 flex items-center gap-3 cursor-pointer">
+              <input type="radio" name="type" value="partnership" class="accent-[var(--sbx-blue)]">
+              <div><div class="font-medium">Partnership</div></div>
+            </label>
+            <label class="border rounded-lg px-3 py-2 flex items-center gap-3 cursor-pointer">
+              <input type="radio" name="type" value="individual" class="accent-[var(--sbx-blue)]">
+              <div><div class="font-medium">Individual / Sole trader / Landlord</div></div>
+            </label>
+          </div>
+        </section>
+
+        <!-- Individual -->
+        <section id="sec-individual" class="bg-white rounded-xl2 shadow-soft p-5 md:p-7 hidden">
+          <h2 class="text-lg md:text-xl font-semibold text-sbx-blue mb-4">Individual scenario</h2>
+          <div class="grid gap-2 mb-3">
+            <label class="border rounded-lg px-3 py-2 flex items-center gap-3 cursor-pointer">
+              <input type="radio" name="indKind" value="untaxedOnly" class="accent-[var(--sbx-blue)]" checked>
+              <div><div class="font-medium">Untaxed income only</div>
+                <div class="text-sm text-gray-600">E.g. bank interest/dividends/side income — not a full business</div>
+              </div>
+            </label>
+            <label class="border rounded-lg px-3 py-2 flex items-center gap-3 cursor-pointer">
+              <input type="radio" name="indKind" value="soleTrader" class="accent-[var(--sbx-blue)]">
+              <div><div class="font-medium">Sole trader business</div></div>
+            </label>
+            <label class="border rounded-lg px-3 py-2 flex items-center gap-3 cursor-pointer">
+              <input type="radio" name="indKind" value="landlord" class="accent-[var(--sbx-blue)]">
+              <div><div class="font-medium">Landlord (property income)</div></div>
+            </label>
+          </div>
+
+          <div id="ind-sole" class="grid md:grid-cols-2 gap-4 hidden">
+            <label class="flex flex-col gap-1">
+              <span class="text-sm">Business size</span>
+              <select id="stTier" class="border rounded-lg px-3 py-2">
+                <option value="st_micro">Micro (≤£30k revenue & light records)</option>
+                <option value="st_std" selected>Standard (£30k–£90k or moderate records)</option>
+                <option value="st_vat">VAT registered / >£90k revenue</option>
+              </select>
+            </label>
+            <label class="flex flex-col gap-1">
+              <span class="text-sm">VAT status</span>
+              <select id="indVat" class="border rounded-lg px-3 py-2">
+                <option value="none" selected>Not VAT registered</option>
+                <option value="voluntary">VAT registered (voluntary)</option>
+                <option value="mandatory">VAT registered (mandatory > £90k)</option>
+              </select>
+            </label>
+          </div>
+
+          <div id="ind-landlord" class="grid md:grid-cols-3 gap-4 hidden mt-3">
+            <label class="flex flex-col gap-1">
+              <span class="text-sm"># of properties</span>
+              <input type="number" id="llProps" value="1" min="1" class="border rounded-lg px-3 py-2">
+            </label>
+          </div>
+        </section>
+
+        <!-- Partnership -->
+        <section id="sec-partnership" class="bg-white rounded-xl2 shadow-soft p-5 md:p-7 hidden">
+          <h2 class="text-lg md:text-xl font-semibold text-sbx-blue mb-4">Partnership details</h2>
+          <div class="grid md:grid-cols-3 gap-4">
+            <label class="flex flex-col gap-1">
+              <span class="text-sm"># of partners</span>
+              <input type="number" id="partners" value="2" min="1" class="border rounded-lg px-3 py-2">
+            </label>
+            <label class="flex flex-col gap-1">
+              <span class="text-sm">VAT status</span>
+              <select id="partVat" class="border rounded-lg px-3 py-2">
+                <option value="none" selected>Not VAT registered</option>
+                <option value="voluntary">VAT registered (voluntary)</option>
+                <option value="mandatory">VAT registered (mandatory > £90k)</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <!-- Company -->
+        <section id="sec-company" class="bg-white rounded-xl2 shadow-soft p-5 md:p-7">
+          <h2 class="text-lg md:text-xl font-semibold text-sbx-blue mb-4">Company type</h2>
+          <div class="grid gap-2">
+            <label class="border rounded-lg px-3 py-2 flex items-center gap-3 cursor-pointer">
+              <input type="radio" name="coKind" value="standard" class="accent-[var(--sbx-blue)]" checked>
+              <div><div class="font-medium">Standard Limited Company</div></div>
+            </label>
+            <label class="border rounded-lg px-3 py-2 flex items-center gap-3 cursor-pointer">
+              <input type="radio" name="coKind" value="propertySPV" class="accent-[var(--sbx-blue)]">
+              <div><div class="font-medium">Property Investment Company (SPV)</div></div>
+            </label>
+          </div>
+
+          <div class="mt-3 grid md:grid-cols-3 gap-4">
+            <label class="flex flex-col gap-1">
+              <span class="text-sm">VAT status</span>
+              <select id="coVat" class="border rounded-lg px-3 py-2">
+                <option value="none" selected>Not VAT registered</option>
+                <option value="voluntary">VAT registered (voluntary)</option>
+                <option value="mandatory">VAT registered (mandatory > £90k)</option>
+              </select>
+            </label>
+
+            <label id="spvPropsWrap" class="flex flex-col gap-1 hidden">
+              <span class="text-sm"># properties in company</span>
+              <input type="number" id="spvProps" value="1" min="1" class="border rounded-lg px-3 py-2">
+            </label>
+
+            <label class="flex flex-col gap-1">
+              <span class="text-sm">CIS returns?</span>
+              <select id="cisTier" class="border rounded-lg px-3 py-2">
+                <option value="none" selected>No subcontractors</option>
+                <option value="s1">1–2 subcontractors</option>
+                <option value="s2">3–5 subcontractors</option>
+                <option value="s3">6–10 subcontractors</option>
+                <option value="s4">11–20 subcontractors</option>
+                <option value="s5">21+ subcontractors (custom)</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="mt-2 text-sm bg-sbx-grey rounded-lg p-3">
+            New Ltd Co signup: <strong>4 months of backdated bookkeeping free</strong>.
+          </div>
+        </section>
+
+        <section id="sec-company-includes" class="bg-white rounded-xl2 shadow-soft p-5 md:p-7">
+          <h2 class="text-lg md:text-xl font-semibold text-sbx-blue mb-4">What’s included / not needed?</h2>
+          <div class="grid md:grid-cols-2 gap-2">
+            <label class="flex items-start gap-3 py-2 cursor-pointer">
+              <input type="checkbox" id="incPayroll" class="mt-1 h-5 w-5 accent-[var(--sbx-blue)]" checked>
+              <div><div class="font-medium">Payroll for up to 1–2 staff</div><div class="text-sm text-gray-600">Remove to reduce price.</div></div>
+            </label>
+            <label class="flex items-start gap-3 py-2 cursor-pointer">
+              <input type="checkbox" id="incBook" class="mt-1 h-5 w-5 accent-[var(--sbx-blue)]" checked>
+              <div><div class="font-medium">Full bookkeeping</div><div class="text-sm text-gray-600">If you keep books in-house, remove to reduce price.</div></div>
+            </label>
+            <label class="flex items-start gap-3 py-2 cursor-pointer">
+              <input type="checkbox" id="incQBO" class="mt-1 h-5 w-5 accent-[var(--sbx-blue)]" checked>
+              <div><div class="font-medium">QuickBooks subscription</div><div class="text-sm text-gray-600">Remove if you already have your own subscription.</div></div>
+            </label>
+            <label class="flex items-start gap-3 py-2 cursor-pointer">
+              <input type="checkbox" id="incDirSA" class="mt-1 h-5 w-5 accent-[var(--sbx-blue)]" checked>
+              <div><div class="font-medium">Single director Self Assessment</div></div>
+            </label>
+          </div>
+
+          <div id="bookPayrollWrap" class="grid md:grid-cols-3 gap-4 mt-3">
+            <label class="flex flex-col gap-1">
+              <span class="text-sm">Monthly transactions</span>
+              <select id="bookTier" class="border rounded-lg px-3 py-2">
+                <option value="low" selected>Up to 100 tx/mo</option>
+                <option value="med">101–300 tx/mo</option>
+                <option value="high">301–800 tx/mo</option>
+                <option value="ultra">800+ tx/mo (custom)</option>
+              </select>
+            </label>
+            <label class="flex flex-col gap-1">
+              <span class="text-sm"># employees (incl. directors)</span>
+              <input type="number" id="employees" value="2" min="0" class="border rounded-lg px-3 py-2">
+            </label>
+          </div>
+        </section>
+
+        <!-- Specialist -->
+        <section class="bg-white rounded-xl2 shadow-soft p-5 md:p-7">
+          <h2 class="text-lg md:text-xl font-semibold text-sbx-blue mb-4">Specialist one-off items (optional)</h2>
+          <div class="grid md:grid-cols-2 gap-2">
+            <label class="flex items-start gap-3 py-2 cursor-pointer">
+              <input type="checkbox" id="cgt60" class="mt-1 h-5 w-5 accent-[var(--sbx-blue)]">
+              <div><div class="font-medium">CGT on UK property — 60-day return</div><div class="text-sm text-gray-600">Includes calculation and HMRC filing.</div></div>
+            </label>
+            <label class="flex items-start gap-3 py-2 cursor-pointer">
+              <input type="checkbox" id="cgtFull" class="mt-1 h-5 w-5 accent-[var(--sbx-blue)]">
+              <div><div class="font-medium">CGT full computation (complex records)</div></div>
+            </label>
+            <label class="flex items-start gap-3 py-2 cursor-pointer">
+              <input type="checkbox" id="trustTRS" class="mt-1 h-5 w-5 accent-[var(--sbx-blue)]">
+              <div><div class="font-medium">Trust Registration (TRS)</div></div>
+            </label>
+            <label class="flex items-start gap-3 py-2 cursor-pointer">
+              <input type="checkbox" id="trustAnnual" class="mt-1 h-5 w-5 accent-[var(--sbx-blue)]">
+              <div><div class="font-medium">Trust Self Assessment (annual)</div></div>
+            </label>
+          </div>
+        </section>
+
+        <!-- Contact -->
+        <section class="bg-white rounded-xl2 shadow-soft p-5 md:p-7">
+          <h2 class="text-lg md:text-xl font-semibold text-sbx-blue mb-4">Contact details (optional but helpful)</h2>
+          <div class="grid md:grid-cols-2 gap-4">
+            <label class="flex flex-col gap-1"><span class="text-sm">Name</span>
+              <input id="cName" class="border rounded-lg px-3 py-2">
+            </label>
+            <label class="flex flex-col gap-1"><span class="text-sm">Email</span>
+              <input id="cEmail" class="border rounded-lg px-3 py-2">
+            </label>
+            <label class="flex flex-col gap-1"><span class="text-sm">Phone</span>
+              <input id="cPhone" class="border rounded-lg px-3 py-2">
+            </label>
+            <label class="flex flex-col gap-1"><span class="text-sm">Company</span>
+              <input id="cCompany" class="border rounded-lg px-3 py-2">
+            </label>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT: summary -->
+      <div class="lg:col-span-2 space-y-6">
+        <section class="bg-white rounded-xl2 shadow-soft p-5 md:p-7">
+          <h2 class="text-lg md:text-xl font-semibold text-sbx-blue mb-4">Your quote</h2>
+          <div id="printArea" class="bg-white rounded-xl2 shadow-soft p-6">
+            <div class="flex items-center justify-between gap-4 mb-3">
+              <h3 class="text-xl font-semibold text-sbx-blue">Estimated Quote</h3>
+              <span class="text-sm text-gray-500">All fees + VAT</span>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-6">
+              <div>
+                <h4 class="font-semibold mb-2">Monthly</h4>
+                <ul id="monthlyList" class="space-y-1"></ul>
+                <div id="adjustmentsLabel" class="mt-2 text-sm text-gray-500 hidden">Adjustments</div>
+                <ul id="discountList" class="space-y-1"></ul>
+                <div class="border-t mt-3 pt-3 flex justify-between text-lg font-semibold">
+                  <span>Total monthly</span><span id="monthlyTotal">£0</span>
+                </div>
+                <div id="tradesNote" class="mt-2 text-sm text-emerald-700 hidden"></div>
+              </div>
+              <div>
+                <h4 class="font-semibold mb-2">One-off</h4>
+                <ul id="oneoffList" class="space-y-1"></ul>
+                <div class="border-t mt-3 pt-3 flex justify-between text-lg font-semibold">
+                  <span>Total one-off</span><span id="oneoffTotal">£0</span>
+                </div>
+              </div>
+            </div>
+
+            <div id="notesWrap" class="mt-4 bg-sbx-grey rounded-lg p-3 text-sm hidden">
+              <div class="font-medium mb-1">Notes</div>
+              <ul id="notesList" class="list-disc list-inside space-y-1"></ul>
+            </div>
+
+            <div id="customFlag" class="mt-3 text-sm text-amber-700 hidden">
+              High complexity detected — we’ll finalise after a quick call to understand volumes/workflows.
+            </div>
+
+            <div class="mt-6 grid sm:grid-cols-3 gap-3 no-print">
+              <button id="btnPrint" class="px-4 py-2 rounded-lg bg-sbx-blue hover:bg-sbx-blueDark text-white font-medium">Print / Save as PDF</button>
+              <button id="btnEmail" class="px-4 py-2 rounded-lg border border-sbx-blue text-sbx-blue font-medium">Open email draft</button>
+              <button id="btnShare" class="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 font-medium">Copy sharable link</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="bg-white rounded-xl2 shadow-soft p-5 md:p-7">
+          <h2 class="text-lg md:text-xl font-semibold text-sbx-blue mb-2">Speak to a Financial Adviser</h2>
+          <p class="text-sm text-gray-700">Need pensions, mortgages or investment advice? We can pass your details to our adviser partner.</p>
+          <div class="mt-3 grid md:grid-cols-2 gap-3 no-print">
+            <button id="btnFA" class="px-4 py-2 rounded-lg bg-sbx-blue text-white font-medium">Request a call</button>
+            <span class="px-4 py-2 rounded-lg border border-sbx-blue text-sbx-blue text-center font-medium">Learn about advice options</span>
+          </div>
+        </section>
+
+        <section class="bg-white rounded-xl2 shadow-soft p-5 md:p-7">
+          <h2 class="text-lg md:text-xl font-semibold text-sbx-blue mb-2">What’s included in our standard company package?</h2>
+          <ul class="list-disc list-inside space-y-1 text-sm text-gray-800">
+            <li>Year-end Accounts & CT600 filing</li>
+            <li>Single Director Self Assessment</li>
+            <li>Payroll for 1–2 staff</li>
+            <li>Confirmation Statement filing (SBX covers the £34 fee)</li>
+            <li>QuickBooks subscription</li>
+            <li>Full bookkeeping</li>
+          </ul>
+          <div class="mt-2 text-xs text-gray-500">If some services aren’t needed, price reduces proportionally. VAT add-on applies if registered (mandatory or voluntary). All fees + VAT.</div>
+        </section>
+      </div>
+    </div>
+
+    <footer class="no-print text-center text-xs text-gray-500 mt-10">
+      © <span id="year"></span> SBX Accountants — Quote is indicative and subject to onboarding & AML checks.
+    </footer>
+  </div>
+
+  <script>
+  // ---------- Utilities ----------
+  const gbp = n => new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP',maximumFractionDigits:0}).format(Math.round(n||0));
+  const clamp = (n,min,max)=>Math.min(Math.max(Number(n)||0,min),max);
+  const qs = sel => document.querySelector(sel);
+  const qsa = sel => Array.from(document.querySelectorAll(sel));
+
+  // URL state helpers
+  const encodeState = (state)=> btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+  const decodeState = (s)=>{ try{ return JSON.parse(decodeURIComponent(escape(atob(s)))); }catch(e){ return null; } };
+
+  // ---------- Pricing constants ----------
+  const CONST = {
+    LTD_BASE_STANDARD: 90,
+    LTD_BASE_PROPERTY: 55,
+    LTD_PROPERTY_PER_EXTRA: 5,
+
+    VAT_MANDATORY_ADDON: 25,
+    VAT_VOLUNTARY_ADDON: 15,
+
+    LTD_DEDUCT_PAYROLL: 10,
+    LTD_DEDUCT_BOOKKEEPING: 25,
+    LTD_DEDUCT_QBO: 10,
+    LTD_DEDUCT_DIR_SA: 5,
+    LTD_MIN_FLOOR: 65,
+
+    PAYROLL_INCLUDED: 2,
+    PAYROLL_PER_EXTRA: 4,
+
+    BOOKKEEPING_TIERS: [
+      {key:'low',  label:'Up to 100 tx/mo',   addon:0},
+      {key:'med',  label:'101–300 tx/mo',     addon:20},
+      {key:'high', label:'301–800 tx/mo',     addon:50},
+      {key:'ultra',label:'800+ tx/mo',        addon:0, custom:true},
+    ],
+
+    CIS_TIERS: [
+      {key:'none', label:'No subcontractors', addon:0},
+      {key:'s1',   label:'1–2 subcontractors',addon:15},
+      {key:'s2',   label:'3–5 subcontractors',addon:25},
+      {key:'s3',   label:'6–10 subcontractors',addon:35},
+      {key:'s4',   label:'11–20 subcontractors',addon:55},
+      {key:'s5',   label:'21+ subcontractors', addon:0, custom:true},
+    ],
+
+    SA_UNTAXED_INCOME_FLAT: 150,
+    SA_SOLE_TRADER_TIERS: [
+      {key:'st_micro', label:'Micro (≤£30k revenue & light records)', fee:200},
+      {key:'st_std',   label:'Standard (£30k–£90k or moderate records)', fee:250},
+      {key:'st_vat',   label:'VAT registered / >£90k revenue', fee:300},
+    ],
+    PARTNERSHIP_BASE: 225,
+    PARTNER_SA_EACH: 150,
+
+    PIC_VAT_ADDON: 15,
+
+    CGT_60DAY_STANDARD: 350,
+    CGT_FULL_COMPUTATION: 450,
+    TRUST_TRS_REG: 375,
+    TRUST_ANNUAL_RETURN: 300,
+
+    TRADES_INTRO_DISCOUNT_MONTHS: 3,
+    TRADES_INTRO_DISCOUNT_RATE: 0.10,
+  };
+
+  // ---------- State ----------
+  const defaultState = {
+    type:'company',
+    // individual
+    individualKind:'untaxedOnly',
+    stTier:'st_std',
+    indVat:'none',
+    llProps:1,
+    // partnership
+    partners:2, partVat:'none',
+    // company
+    coKind:'standard', coVat:'none',
+    spvProps:1, cisTier:'none',
+    incPayroll:true, incBook:true, incQBO:true, incDirSA:true,
+    employees:2, bookTier:'low',
+    // specialist
+    cgt60:false, cgtFull:false, trustTRS:false, trustAnnual:false,
+    // contact
+    cName:'', cEmail:'', cPhone:'', cCompany:''
+  };
+
+  let state = {...defaultState};
+
+  // Load from URL if present
+  (function initFromHash(){
+    const hq = new URLSearchParams(location.hash.slice(1)).get('q');
+    const decoded = hq ? decodeState(hq) : null;
+    if(decoded) state = {...state, ...decoded};
+  })();
+
+  // ---------- DOM wiring ----------
+  const dom = {
+    // sections
+    secIndividual: qs('#sec-individual'),
+    secPartnership: qs('#sec-partnership'),
+    secCompany: qs('#sec-company'),
+    secCompanyIncludes: qs('#sec-company-includes'),
+    spvPropsWrap: qs('#spvPropsWrap'),
+    indSole: qs('#ind-sole'),
+    indLandlord: qs('#ind-landlord'),
+    bookPayrollWrap: qs('#bookPayrollWrap'),
+    // inputs
+    type: qsa('input[name="type"]'),
+    indKind: qsa('input[name="indKind"]'),
+    stTier: qs('#stTier'),
+    indVat: qs('#indVat'),
+    llProps: qs('#llProps'),
+    partners: qs('#partners'),
+    partVat: qs('#partVat'),
+    coKind: qsa('input[name="coKind"]'),
+    coVat: qs('#coVat'),
+    spvProps: qs('#spvProps'),
+    cisTier: qs('#cisTier'),
+    incPayroll: qs('#incPayroll'),
+    incBook: qs('#incBook'),
+    incQBO: qs('#incQBO'),
+    incDirSA: qs('#incDirSA'),
+    employees: qs('#employees'),
+    bookTier: qs('#bookTier'),
+    cgt60: qs('#cgt60'),
+    cgtFull: qs('#cgtFull'),
+    trustTRS: qs('#trustTRS'),
+    trustAnnual: qs('#trustAnnual'),
+    cName: qs('#cName'),
+    cEmail: qs('#cEmail'),
+    cPhone: qs('#cPhone'),
+    cCompany: qs('#cCompany'),
+    // summary
+    monthlyList: qs('#monthlyList'),
+    discountList: qs('#discountList'),
+    adjustmentsLabel: qs('#adjustmentsLabel'),
+    monthlyTotal: qs('#monthlyTotal'),
+    oneoffList: qs('#oneoffList'),
+    oneoffTotal: qs('#oneoffTotal'),
+    notesWrap: qs('#notesWrap'),
+    notesList: qs('#notesList'),
+    customFlag: qs('#customFlag'),
+    tradesNote: qs('#tradesNote'),
+    // buttons
+    btnPrint: qs('#btnPrint'),
+    btnEmail: qs('#btnEmail'),
+    btnShare: qs('#btnShare'),
+    btnFA: qs('#btnFA'),
+  };
+
+  function show(el, on){ el.classList.toggle('hidden', !on); }
+  function setVal(el, val){ if(el) el.value = val; }
+  function setChecked(el, val){ if(el) el.checked = !!val; }
+
+  // Bind inputs to state
+  function bind(){
+    dom.type.forEach(r=> r.addEventListener('change', ()=>{ state.type = r.value; updateUI(); }));
+    dom.indKind.forEach(r=> r.addEventListener('change', ()=>{ state.individualKind = r.value; updateUI(); }));
+
+    dom.stTier.addEventListener('change', ()=>{ state.stTier = dom.stTier.value; calcAndRender(); });
+    dom.indVat.addEventListener('change', ()=>{ state.indVat = dom.indVat.value; calcAndRender(); });
+    dom.llProps.addEventListener('input', ()=>{ state.llProps = clamp(dom.llProps.value,1,999); calcAndRender(); });
+
+    dom.partners.addEventListener('input', ()=>{ state.partners = clamp(dom.partners.value,1,10); calcAndRender(); });
+    dom.partVat.addEventListener('change', ()=>{ state.partVat = dom.partVat.value; calcAndRender(); });
+
+    dom.coKind.forEach(r=> r.addEventListener('change', ()=>{ state.coKind = r.value; updateUI(); }));
+    dom.coVat.addEventListener('change', ()=>{ state.coVat = dom.coVat.value; calcAndRender(); });
+    dom.spvProps.addEventListener('input', ()=>{ state.spvProps = clamp(dom.spvProps.value,1,999); calcAndRender(); });
+    dom.cisTier.addEventListener('change', ()=>{ state.cisTier = dom.cisTier.value; calcAndRender(); });
+
+    dom.incPayroll.addEventListener('change', ()=>{ state.incPayroll = dom.incPayroll.checked; calcAndRender(); });
+    dom.incBook.addEventListener('change', ()=>{ state.incBook = dom.incBook.checked; updateUI(); calcAndRender(); });
+    dom.incQBO.addEventListener('change', ()=>{ state.incQBO = dom.incQBO.checked; calcAndRender(); });
+    dom.incDirSA.addEventListener('change', ()=>{ state.incDirSA = dom.incDirSA.checked; calcAndRender(); });
+    dom.employees.addEventListener('input', ()=>{ state.employees = clamp(dom.employees.value,0,999); calcAndRender(); });
+    dom.bookTier.addEventListener('change', ()=>{ state.bookTier = dom.bookTier.value; calcAndRender(); });
+
+    dom.cgt60.addEventListener('change', ()=>{ state.cgt60 = dom.cgt60.checked; calcAndRender(); });
+    dom.cgtFull.addEventListener('change', ()=>{ state.cgtFull = dom.cgtFull.checked; calcAndRender(); });
+    dom.trustTRS.addEventListener('change', ()=>{ state.trustTRS = dom.trustTRS.checked; calcAndRender(); });
+    dom.trustAnnual.addEventListener('change', ()=>{ state.trustAnnual = dom.trustAnnual.checked; calcAndRender(); });
+
+    dom.cName.addEventListener('input', ()=> state.cName = dom.cName.value);
+    dom.cEmail.addEventListener('input', ()=> state.cEmail = dom.cEmail.value);
+    dom.cPhone.addEventListener('input', ()=> state.cPhone = dom.cPhone.value);
+    dom.cCompany.addEventListener('input', ()=> state.cCompany = dom.cCompany.value);
+
+    dom.btnPrint.addEventListener('click', ()=> window.print());
+    dom.btnShare.addEventListener('click', copySharable);
+    dom.btnEmail.addEventListener('click', openEmail);
+    dom.btnFA.addEventListener('click', sendFA);
+  }
+
+  function updateUI(){
+    // show sections per type
+    show(dom.secIndividual, state.type==='individual');
+    show(dom.secPartnership, state.type==='partnership');
+    show(dom.secCompany, state.type==='company');
+    show(dom.secCompanyIncludes, state.type==='company' && state.coKind==='standard');
+
+    // individual sub-forms
+    show(dom.indSole, state.type==='individual' && state.individualKind==='soleTrader');
+    show(dom.indLandlord, state.type==='individual' && state.individualKind==='landlord');
+
+    // company SPV extra
+    show(dom.spvPropsWrap, state.type==='company' && state.coKind==='propertySPV');
+
+    // bookkeeping sub-controls only if bookkeeping included
+    show(dom.bookPayrollWrap, state.type==='company' && state.coKind==='standard' && state.incBook);
+
+    // sync inputs to current state (useful when loading from URL)
+    qsa('input[name="type"]').forEach(r=> r.checked = (r.value===state.type));
+    qsa('input[name="indKind"]').forEach(r=> r.checked = (r.value===state.individualKind));
+    qsa('input[name="coKind"]').forEach(r=> r.checked = (r.value===state.coKind));
+
+    setVal(dom.stTier, state.stTier);
+    setVal(dom.indVat, state.indVat);
+    setVal(dom.llProps, state.llProps);
+    setVal(dom.partners, state.partners);
+    setVal(dom.partVat, state.partVat);
+    setVal(dom.coVat, state.coVat);
+    setVal(dom.spvProps, state.spvProps);
+    setVal(dom.cisTier, state.cisTier);
+    setChecked(dom.incPayroll, state.incPayroll);
+    setChecked(dom.incBook, state.incBook);
+    setChecked(dom.incQBO, state.incQBO);
+    setChecked(dom.incDirSA, state.incDirSA);
+    setVal(dom.employees, state.employees);
+    setVal(dom.bookTier, state.bookTier);
+
+    calcAndRender();
+  }
+
+  function addRow(listEl, label, amount){
+    const li = document.createElement('li');
+    li.className = 'flex justify-between';
+    li.innerHTML = `<span>${label}</span><span>${gbp(amount)}</span>`;
+    listEl.appendChild(li);
+  }
+
+  function calcAndRender(){
+    // keep URL sharable
+    const q = encodeState(state);
+    history.replaceState(null,'',`#q=${q}`);
+
+    // clear lists
+    dom.monthlyList.innerHTML = '';
+    dom.discountList.innerHTML = '';
+    dom.oneoffList.innerHTML = '';
+    dom.notesList.innerHTML = '';
+    dom.tradesNote.classList.add('hidden');
+
+    let monthly = 0, oneoff = 0;
+    const discounts = [];
+    const notes = [];
+    let customNeeded = false;
+    let tradesIntroMonthly = 0;
+
+    // INDIVIDUAL
+    if(state.type==='individual'){
+      if(state.individualKind==='untaxedOnly'){
+        oneoff += CONST.SA_UNTAXED_INCOME_FLAT;
+        addRow(dom.oneoffList,'Self Assessment (untaxed income only)', CONST.SA_UNTAXED_INCOME_FLAT);
+      } else if(state.individualKind==='soleTrader'){
+        const tier = CONST.SA_SOLE_TRADER_TIERS.find(t=>t.key===state.stTier) || CONST.SA_SOLE_TRADER_TIERS[1];
+        oneoff += tier.fee;
+        addRow(dom.oneoffList, `Sole Trader Self Assessment — ${tier.label}`, tier.fee);
+        if(state.indVat!=='none') notes.push('VAT returns pricing available as a monthly add-on if required.');
+      } else if(state.individualKind==='landlord'){
+        const base = 200 + (state.llProps>1 ? (state.llProps-1)*25 : 0);
+        oneoff += base;
+        addRow(dom.oneoffList, `Self Assessment (Landlord with ${state.llProps} propert${state.llProps>1?'ies':'y'})`, base);
+      }
+    }
+
+    // PARTNERSHIP
+    if(state.type==='partnership'){
+      oneoff += CONST.PARTNERSHIP_BASE;
+      addRow(dom.oneoffList,'Partnership Tax Return (SA800)', CONST.PARTNERSHIP_BASE);
+      const partners = clamp(state.partners,1,10);
+      const pfee = CONST.PARTNER_SA_EACH * partners;
+      oneoff += pfee;
+      addRow(dom.oneoffList, `Partners’ Self Assessments (${partners} @ £${CONST.PARTNER_SA_EACH})`, pfee);
+      if(state.partVat!=='none') notes.push('VAT quarterly filings can be added monthly.');
+    }
+
+    // COMPANY
+    if(state.type==='company'){
+      if(state.coKind==='propertySPV'){
+        monthly += CONST.LTD_BASE_PROPERTY;
+        addRow(dom.monthlyList, 'Property Investment Co. package (base)', CONST.LTD_BASE_PROPERTY);
+        if(state.spvProps>1){
+          const extra = (state.spvProps-1)*CONST.LTD_PROPERTY_PER_EXTRA;
+          monthly += extra; addRow(dom.monthlyList, `Additional properties (${state.spvProps-1} @ £${CONST.LTD_PROPERTY_PER_EXTRA})`, extra);
+        }
+        if(state.coVat==='mandatory'){ monthly += CONST.VAT_MANDATORY_ADDON; addRow(dom.monthlyList,'VAT add-on (mandatory)', CONST.VAT_MANDATORY_ADDON); }
+        if(state.coVat==='voluntary'){ monthly += CONST.PIC_VAT_ADDON; addRow(dom.monthlyList,'VAT add-on (voluntary)', CONST.PIC_VAT_ADDON); }
+        const cis = CONST.CIS_TIERS.find(t=>t.key===state.cisTier);
+        if(cis && cis.addon>0){ monthly += cis.addon; addRow(dom.monthlyList, `CIS returns — ${cis.label}`, cis.addon); }
+        if(cis && cis.custom){ customNeeded = true; notes.push('CIS subcontractor volume suggests a custom quote.'); }
+        if(state.cisTier!=='none'){ tradesIntroMonthly = Math.round(monthly * CONST.TRADES_INTRO_DISCOUNT_RATE); }
+      } else {
+        // standard ltd
+        monthly += CONST.LTD_BASE_STANDARD;
+        addRow(dom.monthlyList,'Standard Company package (base)', CONST.LTD_BASE_STANDARD);
+
+        if(!state.incPayroll) discounts.push(['No payroll required (-£10)', CONST.LTD_DEDUCT_PAYROLL]);
+        if(!state.incBook) discounts.push(['Client handles bookkeeping (-£25)', CONST.LTD_DEDUCT_BOOKKEEPING]);
+        if(!state.incQBO) discounts.push(['Already have QuickBooks/Xero (-£10)', CONST.LTD_DEDUCT_QBO]);
+        if(!state.incDirSA) discounts.push(['Director SA not required (-£5)', CONST.LTD_DEDUCT_DIR_SA]);
+
+        if(state.coVat==='mandatory'){ monthly += CONST.VAT_MANDATORY_ADDON; addRow(dom.monthlyList,'VAT add-on (mandatory)', CONST.VAT_MANDATORY_ADDON); }
+        if(state.coVat==='voluntary'){ monthly += CONST.VAT_VOLUNTARY_ADDON; addRow(dom.monthlyList,'VAT add-on (voluntary)', CONST.VAT_VOLUNTARY_ADDON); }
+
+        const extraEmp = Math.max(0, (Number(state.employees)||0) - CONST.PAYROLL_INCLUDED);
+        if(state.incPayroll && extraEmp>0){
+          const add = extraEmp * CONST.PAYROLL_PER_EXTRA;
+          monthly += add; addRow(dom.monthlyList, `Payroll for extra employees (${extraEmp} @ £${CONST.PAYROLL_PER_EXTRA})`, add);
+        }
+
+        if(state.incBook){
+          const tier = CONST.BOOKKEEPING_TIERS.find(t=>t.key===state.bookTier) || CONST.BOOKKEEPING_TIERS[0];
+          if(tier.addon>0){ monthly += tier.addon; addRow(dom.monthlyList, `Higher transaction volume — ${tier.label}`, tier.addon); }
+          if(tier.custom){ customNeeded = true; notes.push('Very high transaction volume: custom bookkeeping scope.'); }
+        }
+
+        const cis = CONST.CIS_TIERS.find(t=>t.key===state.cisTier);
+        if(cis && cis.addon>0){ monthly += cis.addon; addRow(dom.monthlyList, `CIS returns — ${cis.label}`, cis.addon); }
+        if(cis && cis.custom){ customNeeded = true; notes.push('CIS subcontractor volume suggests a custom quote.'); }
+
+        if(state.cisTier!=='none' && state.incBook){
+          tradesIntroMonthly = Math.round(monthly * CONST.TRADES_INTRO_DISCOUNT_RATE);
+        }
+      }
+
+      // apply discounts
+      if(discounts.length){
+        dom.adjustmentsLabel.classList.remove('hidden');
+        discounts.forEach(([label,amt])=>{
+          monthly -= amt; // subtract discount
+          const li=document.createElement('li'); li.className='flex justify-between text-emerald-700';
+          li.innerHTML=`<span>${label}</span><span>-${gbp(amt)}</span>`;
+          dom.discountList.appendChild(li);
+        });
+      } else {
+        dom.adjustmentsLabel.classList.add('hidden');
+      }
+
+      if(monthly < CONST.LTD_MIN_FLOOR){
+        const bump = CONST.LTD_MIN_FLOOR - monthly;
+        monthly += bump;
+        addRow(dom.monthlyList,'Minimum package floor adjustment', bump);
+        notes.push('Pricing floor applied to cover statutory compliance and filing overheads.');
+      }
+
+      notes.push('New Ltd Co signup: includes <strong>4 months of backdated bookkeeping</strong> for free.');
+
+      if(tradesIntroMonthly>0){
+        dom.tradesNote.textContent = `Trades bundle: ~${gbp(tradesIntroMonthly)} off for first ${CONST.TRADES_INTRO_DISCOUNT_MONTHS} months (when CIS included).`;
+        dom.tradesNote.classList.remove('hidden');
+      }
+    }
+
+    // Specialist one-offs
+    if(state.cgt60){ oneoff += CONST.CGT_60DAY_STANDARD; addRow(dom.oneoffList, 'CGT on UK property — 60-day return (calc & filing)', CONST.CGT_60DAY_STANDARD); }
+    if(state.cgtFull){ oneoff += CONST.CGT_FULL_COMPUTATION; addRow(dom.oneoffList, 'CGT full computation (complex records)', CONST.CGT_FULL_COMPUTATION); }
+    if(state.trustTRS){ oneoff += CONST.TRUST_TRS_REG; addRow(dom.oneoffList, 'Trust Registration (TRS)', CONST.TRUST_TRS_REG); }
+    if(state.trustAnnual){ oneoff += CONST.TRUST_ANNUAL_RETURN; addRow(dom.oneoffList, 'Trust Self Assessment (from)', CONST.TRUST_ANNUAL_RETURN); }
+
+    // Totals
+    dom.monthlyTotal.textContent = gbp(monthly);
+    dom.oneoffTotal.textContent = gbp(oneoff);
+
+    // Notes
+    if(notes.length){
+      dom.notesWrap.classList.remove('hidden');
+      notes.forEach(n=>{
+        const li=document.createElement('li'); li.innerHTML=n; dom.notesList.appendChild(li);
+      });
+    } else {
+      dom.notesWrap.classList.add('hidden');
+    }
+    dom.customFlag.classList.toggle('hidden', !customNeeded);
+  }
+
+  function openEmail(){
+    const b=[];
+    b.push(`Name: ${state.cName||''}`);
+    b.push(`Email: ${state.cEmail||''}`);
+    b.push(`Phone: ${state.cPhone||''}`);
+    b.push(`Company: ${state.cCompany||''}`);
+    b.push('');
+    b.push('--- Quote Summary ---');
+    qsa('#monthlyList li').forEach(li=> b.push(li.textContent));
+    if(!dom.adjustmentsLabel.classList.contains('hidden')){
+      b.push('Adjustments:'); qsa('#discountList li').forEach(li=> b.push('  '+li.textContent));
+    }
+    b.push(`Total monthly: ${qs('#monthlyTotal').textContent}`);
+    b.push('');
+    qsa('#oneoffList li').forEach(li=> b.push(li.textContent));
+    b.push(`Total one-off: ${qs('#oneoffTotal').textContent}`);
+    b.push('');
+    if(!dom.notesWrap.classList.contains('hidden')){
+      b.push('Notes:'); qsa('#notesList li').forEach(li=> b.push('- '+li.textContent));
+    }
+    const subject=encodeURIComponent('SBX Quote Request');
+    const body=encodeURIComponent(b.join('\n'));
+    location.href=`mailto:ryan@sbxaccountants.com?subject=${subject}&body=${body}`;
+  }
+
+  async function copySharable(){
+    const q = encodeState(state);
+    const url = location.origin + location.pathname + `#q=${q}`;
+    try{ await navigator.clipboard.writeText(url); alert('Sharable link copied to clipboard.'); }
+    catch(e){ prompt('Copy this link:', url); }
+  }
+
+  function sendFA(){
+    const msg = encodeURIComponent(`Client wishes to speak to financial adviser.\nName: ${state.cName}\nEmail: ${state.cEmail}\nPhone: ${state.cPhone}\nCompany: ${state.cCompany}`);
+    location.href = `mailto:ryan@sbxaccountants.com?subject=${encodeURIComponent('FA Referral — SBX site')}&body=${msg}`;
+  }
+
+  // Init
+  document.getElementById('year').textContent = new Date().getFullYear();
+  bind(); updateUI();
   </script>
 </body>
 </html>
