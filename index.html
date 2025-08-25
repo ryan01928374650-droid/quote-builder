@@ -760,7 +760,7 @@
                     <input className="sub-check" type="checkbox" checked={s.formation} onChange={e=>s.setFormation(e.target.checked)} />
                     <span><span className="font-medium">Company formation</span><br/><span className="text-[var(--sbx-mute)]">Free with our monthly packages (we recharge the £50 Companies House fee to you after).</span></span>
                   </label>
-                  <!-- AE moved under company formation for Ltd -->
+                  {/** AE moved under company formation for Ltd **/}
                   <label className="flex items-start gap-3 text-sm">
                     <input className="chk" type="checkbox" checked={s.aePension} onChange={e=>s.setAePension(e.target.checked)} />
                     <span><span className="font-medium">Auto-enrolment pension administration</span> (optional)</span>
@@ -857,11 +857,9 @@
       // DESKTOP GRIDS
       let areas = "";
       if (s.who==="individual" && !s.isSoleBusiness) {
-        // Row1: s1 | s2  Row2: s6 | s5  (but we renumbered to 3/4 above)
         areas = `"s1 s2"
                  "s6 s5"`;
       } else if (s.who==="landlord") {
-        // Row1: s1 | s2  Row2: s5 | s4  Row3: s6 | .
         areas = `"s1 s2"
                  "s5 s4"
                  "s6 ."`;
@@ -878,7 +876,7 @@
       } else if(!showCIS && showRevenue){
         areas = `"s1 s2"
                  "s4 s3"
-                 "s5 s6"`;  /* ensures 4 ↓ 5 and 5 → 6 */
+                 "s5 s6"`;
       } else {
         areas = `"s1 s2"
                  "s4 ."
@@ -908,7 +906,6 @@
         else arrows[cur]="down";
       }
 
-      // Keep the earlier special-case overrides where applicable
       arrows['s2']='down';
       if(showCIS){ arrows['s2a']='left'; arrows['s3']='down'; arrows['s4']='right'; arrows['s5']='dl'; }
       else { if(showRevenue){ arrows['s3']='left'; } }
