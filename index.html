@@ -80,12 +80,12 @@
 
     const ARROWS = { right:"→", down:"↓", left:"←", dl:"↙", dr:"↘" };
 
-    const Section = ({id,stepLabel,arrow,title,subtitle,children,isMobile})=>(
-      <div id={id} className={`card p-6 h-full flex flex-col ${isMobile?'arrow-override-down':''}`}>
+    const Section = ({stepLabel,arrow,title,subtitle,children,isMobile})=>(
+      <div className={`card p-6 h-full flex flex-col ${isMobile?'arrow-override-down':''}`}>
         <div className="mb-3 flex items-center justify-between">
           <span className="step-badge">
             Step&nbsp;{stepLabel}
-            <span className="step-arrow">{isMobile ? "" : ARROWS[arrow] || ""}</span>
+            <span className="step-arrow">{isMobile ? "" : (ARROWS[arrow] || "")}</span>
           </span>
         </div>
         <h2 className="text-xl font-semibold text-[var(--sbx-blue)]">{title}</h2>
@@ -114,45 +114,50 @@
       const [tierKey,setTierKey]=React.useState("30_90");
       const [isTrades,setIsTrades]=React.useState(false);
       const [dormant,setDormant]=React.useState(false);
-      const [yearEnd,setYearEnd]=React.useState(""); // yyyy-mm-dd
+      const [yearEnd,setYearEnd]=React.useState("");
 
       // Counts
       const [employees,setEmployees]=React.useState(1); // incl directors
       const [spvProperties,setSpvProperties]=React.useState(1);
       const [personalProperties,setPersonalProperties]=React.useState(0);
 
-      // Inclusions (monthly standard; QB standard)
+      // Inclusions
       const [includePayroll,setIncludePayroll]=React.useState(true);
       const [includeBookkeeping,setIncludeBookkeeping]=React.useState(true);
-      const [includeSingleSA,setIncludeSingleSA]=React.useState(true); // untick → -£10/mo
+      const [includeSingleSA,setIncludeSingleSA]=React.useState(true);
 
       // VAT flow
       const [vatRegistered,setVatRegistered]=React.useState(false);
-      const [vatReturns,setVatReturns]=React.useState(false); // appears in What's Included when registered
+      const [vatReturns,setVatReturns]=React.useState(false);
 
       // Individual intent
-      const [isSoleBusiness,setIsSoleBusiness]=React.useState(true); // for who==="individual"
-      const [saNonBusiness,setSaNonBusiness]=React.useState(false);  // personal SA only
-      const [saSoleBusiness,setSaSoleBusiness]=React.useState(true); // business owner SA
+      const [isSoleBusiness,setIsSoleBusiness]=React.useState(true);
+      const [saNonBusiness,setSaNonBusiness]=React.useState(false);
+      const [saSoleBusiness,setSaSoleBusiness]=React.useState(true);
 
-      // Bookkeeping support (partnership/individual)
-      const [bkDoWeDoIt,setBkDoWeDoIt]=React.useState(false); // false = I do my own; true = please do my bookkeeping
+      // Bookkeeping (partnership/individual)
+      const [bkDoWeDoIt,setBkDoWeDoIt]=React.useState(false);
 
       // Partnership
-      const [numPartnersSA,setNumPartnersSA]=React.useState(2); // partners needing SA
+      const [numPartnersSA,setNumPartnersSA]=React.useState(2);
 
       // Limited extras
       const [additionalDirectorSAs,setAdditionalDirectorSAs]=React.useState(0);
       const [formation,setFormation]=React.useState(false);
 
-      // Trades / CIS split
+      // Trades / CIS
       const [isCISContractor,setIsCISContractor]=React.useState(false);
       const [isCISSubcontractor,setIsCISSubcontractor]=React.useState(false);
       const [cisMonthlyReturns,setCisMonthlyReturns]=React.useState(false);
       const [cisSubbies,setCisSubbies]=React.useState(0);
-      const [trackCISStatements,setTrackCISStatements]=React.useState(false); // free
+      const [trackCISStatements,setTrackCISStatements]=React.useState(false);
 
-      // Specialist (focused)
+      // Landlord ownership + partner SA
+      const [personallyOwned,setPersonallyOwned]=React.useState(true);
+      const [jointlyOwned,setJointlyOwned]=React.useState(false);
+      const [otherPartnerSA,setOtherPartnerSA]=React.useState(false);
+
+      // Specialist
       const [ihtReview,setIhtReview]=React.useState(false);
       const [trustsWork,setTrustsWork]=React.useState(false);
       const [cgtWork,setCgtWork]=React.useState(false);
@@ -161,7 +166,7 @@
       const [p11dEmployees,setP11dEmployees]=React.useState(1);
       const [dirPayOptimiser,setDirPayOptimiser]=React.useState(false); // hidden for individual/landlord
 
-      // Defaults/side-effects
+      // Effects
       React.useEffect(()=>{
         if(dormant){
           setEmployees(0);
@@ -174,15 +179,13 @@
         }
       },[dormant]);
 
-      // VAT default based on tier
       React.useEffect(()=>{
-        const idx = ["u30","30_90"].indexOf(tierKey)===-1 ? 2 : 0; // crude
-        const isOver90 = idx===2; // if not in first two tiers
-        setVatRegistered(isOver90);
-        setVatReturns(isOver90);
+        const idx = REVENUE_TIERS.findIndex(t=>t.key===tierKey);
+        const over90 = idx>=2; // tiers index 0,1 are ≤£90k
+        setVatRegistered(over90);
+        setVatReturns(over90);
       },[tierKey]);
 
-      // Individual intent
       React.useEffect(()=>{
         if(who!=="individual") return;
         if(isSoleBusiness){
@@ -204,17 +207,15 @@
         isSoleBusiness,setIsSoleBusiness,saNonBusiness,setSaNonBusiness,saSoleBusiness,setSaSoleBusiness,
         bkDoWeDoIt,setBkDoWeDoIt,
         numPartnersSA,setNumPartnersSA,
-        additionalDirectorSAs,setAdditionalDirectorSAs,
-        formation,setFormation,
-        isCISContractor,setIsCISContractor,isCISSubcontractor,setIsCISSubcontractor,
-        cisMonthlyReturns,setCisMonthlyReturns,cisSubbies,setCisSubbies,trackCISStatements,setTrackCISStatements,
+        additionalDirectorSAs,setAdditionalDirectorSAs,formation,setFormation,
+        isCISContractor,setIsCISContractor,isCISSubcontractor,setIsCISSubcontractor,cisMonthlyReturns,setCisMonthlyReturns,cisSubbies,setCisSubbies,trackCISStatements,setTrackCISStatements,
+        personallyOwned,setPersonallyOwned,jointlyOwned,setJointlyOwned,otherPartnerSA,setOtherPartnerSA,
         ihtReview,setIhtReview,trustsWork,setTrustsWork,cgtWork,setCgtWork,propIncorpReview,setPropIncorpReview,
         p11d,setP11d,p11dEmployees,setP11dEmployees,
         dirPayOptimiser,setDirPayOptimiser
       };
     }
 
-    // helpers
     function monthsSince(dateStr){
       if(!dateStr) return 0;
       const d = new Date(dateStr);
@@ -229,7 +230,6 @@
       const m = tier.multiplier;
 
       const monthly=[], oneoff=[];
-      // decide if monthly flows apply
       const allowMonthly =
         !(s.who==="limited" && s.dormant) &&
         s.who!=="landlord" &&
@@ -239,13 +239,9 @@
         if(s.who==="limited"){
           const base = 90*m;
           monthly.push({label:"Basic Company Package (base)",note:"YE accounts & CT return · 1 director SA included · Payroll 1–2 · CS filing (we cover £34) · QuickBooks · Bookkeeping",amount:base});
-
-          // Deductions (negative)
           if(!s.includeBookkeeping) monthly.push({label:"Bookkeeping removed", amount:-20});
           if(!s.includePayroll)     monthly.push({label:"Payroll (1–2) removed", amount:-10});
-          if(!s.includeSingleSA)    monthly.push({label:"Single director SA removed", amount:-10}); // £10/mo
-
-          // Add-ons
+          if(!s.includeSingleSA)    monthly.push({label:"Single director SA removed", amount:-10});
           if(s.includePayroll){
             const extra = Math.max(0, s.employees - 2) * 6;
             if(extra>0) monthly.push({label:"Payroll add-on (over 2 employees)",amount:extra});
@@ -259,13 +255,14 @@
           }
 
         } else if(s.who==="partnership"){
-          const base = 60*m; // accounts + SA800 included
+          const base = 60*m; // accounts + SA800
           monthly.push({label:"Partnership Accounts & SA800 (base)",amount:base});
           if(s.bkDoWeDoIt) monthly.push({label:"Bookkeeping service",amount:45*m});
           if(s.vatRegistered && s.vatReturns) monthly.push({label:"VAT Returns (averaged monthly)",amount:20});
           if(s.employees>0) monthly.push({label:"Payroll add-on",amount:10*s.employees});
+
         } else if(s.who==="individual" && s.isSoleBusiness){
-          const base = 40*m; // YE accounts included
+          const base = 40*m; // YE accounts
           monthly.push({label:"Sole Trader Year-end (base)",amount:base});
           if(s.bkDoWeDoIt) monthly.push({label:"Bookkeeping service",amount:40*m});
           if(s.vatRegistered && s.vatReturns) monthly.push({label:"VAT Returns (averaged monthly)",amount:20});
@@ -275,11 +272,10 @@
         // CIS monthly (Contractor)
         if(s.isTrades && s.isCISContractor && s.cisMonthlyReturns){
           const extra = Math.max(0, s.cisSubbies - 5) * 2;
-          const amount = 20 + extra;
           monthly.push({
             label:"CIS Monthly Returns (contractor)",
             note:`for ${s.cisSubbies} subcontractor${s.cisSubbies===1?'':'s'}`,
-            amount
+            amount:20+extra
           });
         }
       }
@@ -289,13 +285,11 @@
         oneoff.push({label:"Dormant Accounts & Confirmation Statement",amount:120});
       }
 
-      // Formation (free SBX; £50 CH recharge)
       if(s.who==="limited" && s.formation){
         oneoff.push({label:"Company formation (SBX fee)",note:"Free with our monthly packages",amount:0});
         oneoff.push({label:"Companies House incorporation fee",amount:50});
       }
 
-      // Bookkeeping catch-up (Ltd, not dormant) based on computed monthly total after deductions
       if(s.who==="limited" && !s.dormant && s.yearEnd){
         const tmpMonthlyTotal = monthly.reduce((a,b)=>a+(b.amount||0),0);
         const months = monthsSince(s.yearEnd);
@@ -305,7 +299,6 @@
         }
       }
 
-      // Self Assessments & partners
       if(s.who==="individual" && s.isSoleBusiness && s.saSoleBusiness){
         let sa=200; const k=s.tierKey;
         if(k==="30_90") sa=230; if(k==="90_150") sa=270; if(k==="150_250") sa=320; if(k==="250_350") sa=350; if(k==="350p") sa=380;
@@ -315,23 +308,23 @@
         oneoff.push({label:"Self-Assessment (personal — investments/other)",amount:150});
       }
       if(s.who==="landlord"){
-        // main taxpayer SA
-        oneoff.push({label:"Self-Assessment (personal landlord)",note:`${s.personalProperties} rental propert${s.personalProperties===1?'y':'ies'}`,amount:150 + Math.max(0,s.personalProperties)*20});
+        const base = 150 + Math.max(0, s.personalProperties)*20;
+        oneoff.push({label:"Self-Assessment (personal landlord)",note:`${s.personalProperties} rental propert${s.personalProperties===1?'y':'ies'}`,amount:base});
+        if(s.jointlyOwned && s.otherPartnerSA){
+          oneoff.push({label:"Self-Assessment for joint partner (landlord)",amount:base});
+        }
       }
       if(s.who==="partnership"){
-        // partners' SA (per partner)
         if(s.numPartnersSA>0) oneoff.push({label:`Partners' Self Assessments ×${s.numPartnersSA}`,amount:150*s.numPartnersSA});
       }
       if(s.who==="limited" && s.additionalDirectorSAs>0){
         oneoff.push({label:`Additional directors (Self Assessment) ×${s.additionalDirectorSAs}`,amount:180*s.additionalDirectorSAs});
       }
 
-      // CIS freebies
       if(s.isTrades && s.isCISSubcontractor && s.trackCISStatements){
         oneoff.push({label:"CIS statements tracking (subcontractor)",note:"Free",amount:0});
       }
 
-      // Specialist
       if(s.ihtReview)        oneoff.push({label:"IHT review & recommendations",amount:250});
       if(s.trustsWork)       oneoff.push({label:"Trusts / family investment structures – consult",amount:150});
       if(s.cgtWork)          oneoff.push({label:"CGT planning / disposal review",amount:150});
@@ -346,406 +339,386 @@
       return {monthly, oneoff, monthlyTotal, oneOffTotal};
     }
 
-    /* ------------ LAYOUT: snake with dynamic arrows ------------ */
-    function InputsSnake({ s, onNext }) {
+    function SnakeGrid({sections}) {
       const isDesktop = useIsDesktop();
 
-      // visibility
-      const showCIS = s.isTrades && (s.who==="limited" || s.who==="partnership" || (s.who==="individual" && s.isSoleBusiness));
-      const showRevenue = !(s.who==="landlord" || (s.who==="individual" && !s.isSoleBusiness));
-
-      // sections (create content first)
-      const sections = {
-        s1: {
-          step:"1",
-          title:"Who is this for?",
-          subtitle:"",
-          content:(
-            <div className="grid gap-3">
-              <label className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${s.who==="limited"?"border-[var(--sbx-blue)] bg-blue-50/40":"border-slate-200"}`}>
-                <input type="radio" name="who" checked={s.who==="limited"} onChange={()=>s.setWho("limited")} />
-                <div className="font-medium">Limited company</div>
-              </label>
-              <label className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${s.who==="partnership"?"border-[var(--sbx-blue)] bg-blue-50/40":"border-slate-200"}`}>
-                <input type="radio" name="who" checked={s.who==="partnership"} onChange={()=>s.setWho("partnership")} />
-                <div className="font-medium">Partnership</div>
-              </label>
-              <label className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${s.who==="individual"?"border-[var(--sbx-blue)] bg-blue-50/40":"border-slate-200"}`}>
-                <input type="radio" name="who" checked={s.who==="individual"} onChange={()=>s.setWho("individual")} />
-                <div className="font-medium">Individual / Sole Trader</div>
-              </label>
-              <label className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${s.who==="landlord"?"border-[var(--sbx-blue)] bg-blue-50/40":"border-slate-200"}`}>
-                <input type="radio" name="who" checked={s.who==="landlord"} onChange={()=>s.setWho("landlord")} />
-                <div className="font-medium">Personal Landlord</div>
-              </label>
-            </div>
-          )
-        },
-
-        s2: {
-          step:"2",
-          title:"Business profile",
-          subtitle:(()=>{
-            if(s.who==="limited")   return "Company type, year end, and any SPV properties";
-            if(s.who==="partnership")return "Basic details — we'll tailor services below";
-            if(s.who==="individual") return "Tell us what fits you best";
-            if(s.who==="landlord")   return "Tell us about your property ownership";
-            return "";
-          })(),
-          content:(
-            <>
-              {/* LIMITED: company type + blurb */}
-              {s.who==="limited" && (
-                <div className="grid gap-3 mb-4">
-                  <label className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${s.companyType==="standard"?"border-[var(--sbx-blue)] bg-blue-50/40":"border-slate-200"}`}>
-                    <input type="radio" name="coType" checked={s.companyType==="standard"} onChange={()=>s.setCompanyType("standard")}/>
-                    <div>
-                      <div className="font-medium">Standard Limited Company</div>
-                      <p className="text-sm text-[var(--sbx-mute)] mt-1">
-                        Our <strong>basic company package</strong> is <strong>£90pm</strong> and includes <em>year-end accounts & CT return, single director Self Assessment, payroll for 1–2 staff, confirmation statement filing (we cover the £34 fee), QuickBooks, and bookkeeping</em>. Price can reduce if you remove items.
-                      </p>
-                    </div>
-                  </label>
-                  <label className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${s.companyType==="property"?"border-[var(--sbx-blue)] bg-blue-50/40":"border-slate-200"}`}>
-                    <input type="radio" name="coType" checked={s.companyType==="property"} onChange={()=>s.setCompanyType("property")}/>
-                    <div className="font-medium">Property Investment Company (SPV)</div>
-                  </label>
-                </div>
-              )}
-
-              {/* GRID: left fixed individual intent (when individual), right trades toggle */}
-              <div className="grid md:grid-cols-2 gap-4">
-                {/* INDIVIDUAL: intent box fixed on the left of trades */}
-                {s.who==="individual" && (
-                  <div className="p-3 border rounded-xl order-1">
-                    <p className="font-medium mb-2">For an individual, what is most appropriate for you?</p>
-                    <label className="flex items-center gap-2 text-sm mb-2">
-                      <input type="radio" name="indType" checked={s.isSoleBusiness} onChange={()=>s.setIsSoleBusiness(true)}/> I run a business (sole trader)
-                    </label>
-                    <label className="flex items-center gap-2 text-sm">
-                      <input type="radio" name="indType" checked={!s.isSoleBusiness} onChange={()=>s.setIsSoleBusiness(false)}/> I need a Self-Assessment for other untaxed income (investments/other)
-                    </label>
-                  </div>
-                )}
-
-                {/* trades toggle (goes on right on desktop) */}
-                {(s.who!=="landlord") && (
-                  <div className={`flex items-center gap-2 ${s.who==="individual" ? "order-2" : ""}`}>
-                    <input id="trades" type="checkbox" checked={s.isTrades} onChange={e=>s.setIsTrades(e.target.checked)} />
-                    <label htmlFor="trades" className="text-sm">Trades / construction business</label>
-                  </div>
-                )}
-
-                {s.who==="limited" && (
-                  <>
-                    <div className="flex items-center gap-2">
-                      <input id="dormant" type="checkbox" checked={s.dormant} onChange={e=>s.setDormant(e.target.checked)} />
-                      <label htmlFor="dormant" className="text-sm">Company is dormant / not trading</label>
-                    </div>
-                    <div>
-                      <label className="block text-sm mb-1">Company year end date</label>
-                      <input type="date" value={s.yearEnd} onChange={e=>s.setYearEnd(e.target.value)} className="w-full border rounded-xl px-3 py-2"/>
-                      <p className="text-xs text-[var(--sbx-mute)] mt-1">We’ll calculate catch-up beyond 4 months free.</p>
-                    </div>
-                    {s.companyType==="property" && (
-                      <div>
-                        <label className="block text-sm mb-1">Number of properties in company (SPV)</label>
-                        <input type="number" min="0" value={s.spvProperties} onChange={e=>s.setSpvProperties(Number(e.target.value)||0)} className="w-full border rounded-xl px-3 py-2"/>
-                      </div>
-                    )}
-                  </>
-                )}
-
-                {s.who==="landlord" && (
-                  <div>
-                    <label className="block text-sm mb-1">Personal rental properties</label>
-                    <input type="number" min="0" value={s.personalProperties} onChange={e=>s.setPersonalProperties(Number(e.target.value)||0)} className="w-full border rounded-xl px-3 py-2"/>
-                    <div className="mt-3 text-sm">
-                      <label className="mr-4"><input type="checkbox" checked={true} disabled/> Self-Assessment for you (default)</label>
-                    </div>
-                    <div className="mt-3 text-sm">
-                      <label className="mr-4"><input type="checkbox" checked={s.jointOwned||false} onChange={e=>{s.jointOwned=e.target.checked; s.setAdditionalPartnerSA?.(prev=>prev)||null}}/> Jointly owned</label>
-                      <label className="ml-4"><input type="checkbox" checked={s.otherPartnerSA||false} onChange={e=>{s.otherPartnerSA=e.target.checked;}}/> Include Self-Assessment for joint partner</label>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {s.who==="limited" && (
-                <div className="text-xs text-[var(--sbx-mute)] mt-3">
-                  New Ltd Co signup: <strong>4 months</strong> of backdated bookkeeping free.
-                </div>
-              )}
-            </>
-          )
-        },
-
-        s2a: showCIS ? {
-          step:"2a",
-          title:"CIS options",
-          subtitle:"Contractors and Subcontractors",
-          content:(
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="p-3 border rounded-xl">
-                <p className="font-medium mb-2">Contractor</p>
-                <label className="flex items-center gap-3 text-sm mb-2">
-                  <input type="checkbox" checked={s.isCISContractor} onChange={e=>s.setIsCISContractor(e.target.checked)}/> I’m a CIS contractor
-                </label>
-                {s.isCISContractor && (
-                  <>
-                    <label className="flex items-center gap-3 text-sm mb-2">
-                      <input className="sub-check" type="checkbox" checked={s.cisMonthlyReturns} onChange={e=>s.setCisMonthlyReturns(e.target.checked)}/> CIS monthly returns
-                    </label>
-                    <div className="flex items-center gap-2 text-sm mb-2">
-                      <span>Subcontractors:</span>
-                      <input type="number" min="0" value={s.cisSubbies} onChange={e=>s.setCisSubbies(Number(e.target.value)||0)} className="w-28 border rounded-xl px-3 py-2"/>
-                    </div>
-                    <div className="text-xs text-[var(--sbx-mute)]">Verification/setup: <strong>free</strong></div>
-                  </>
-                )}
-              </div>
-              <div className="p-3 border rounded-xl">
-                <p className="font-medium mb-2">Subcontractor</p>
-                <label className="flex items-center gap-3 text-sm">
-                  <input type="checkbox" checked={s.isCISSubcontractor} onChange={e=>s.setIsCISSubcontractor(e.target.checked)}/> I’m a CIS subcontractor
-                </label>
-                {s.isCISSubcontractor && (
-                  <label className="flex items-center gap-3 text-sm mt-2">
-                    <input type="checkbox" checked={s.trackCISStatements} onChange={e=>s.setTrackCISStatements(e.target.checked)}/> Track my CIS deduction statements (free)
-                  </label>
-                )}
-              </div>
-            </div>
-          )
-        } : null,
-
-        s3: showRevenue ? {
-          step:"3",
-          title:"Revenue band & VAT",
-          subtitle:"",
-          content:(
-            <div className="space-y-3">
-              <div className="grid md:grid-cols-3 gap-3">
-                {REVENUE_TIERS.map(t=>(
-                  <label key={t.key} className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${s.tierKey===t.key?"border-[var(--sbx-blue)] bg-blue-50/40":"border-slate-200"}`}>
-                    <input type="radio" name="tier" checked={s.tierKey===t.key} onChange={()=>s.setTierKey(t.key)}/>
-                    <div className="font-medium">{t.label}</div>
-                  </label>
-                ))}
-              </div>
-              <label className="flex items-center gap-3 text-sm">
-                <input type="checkbox" checked={s.vatRegistered} onChange={e=>{s.setVatRegistered(e.target.checked); if(!e.target.checked) s.setVatReturns(false); else s.setVatReturns(true);}} />
-                Are you VAT registered?
-              </label>
-            </div>
-          )
-        } : null,
-
-        s4: {
-          step:"4",
-          title:"What’s included / adjustments",
-          subtitle:"Tailor your package",
-          content:(
-            <div className="grid md:grid-cols-2 gap-6">
-              <div className="space-y-3">
-                {s.who==="limited" && (
-                  <>
-                    <div className="relative locked flex items-start gap-3 text-sm">
-                      <input type="checkbox" checked readOnly/>
-                      <span><span className="font-medium">Year-end accounts & CT return</span> (included)</span>
-                    </div>
-                    <div className="flex items-start gap-3 text-sm">
-                      <input type="checkbox" checked readOnly/>
-                      <span><span className="font-medium">Confirmation statement</span> (we do this free & cover the £34 filing fee)</span>
-                    </div>
-                    <label className="flex items-start gap-3 text-sm">
-                      <input type="checkbox" checked={s.includeBookkeeping} onChange={e=>s.setIncludeBookkeeping(e.target.checked)} />
-                      <span><span className="font-medium">Full bookkeeping (included)</span><br/><span className="text-[var(--sbx-mute)]">Untick to remove (shows as a deduction).</span></span>
-                    </label>
-                    <label className="flex items-start gap-3 text-sm">
-                      <input type="checkbox" checked={s.includePayroll} onChange={e=>s.setIncludePayroll(e.target.checked)} />
-                      <span><span className="font-medium">Payroll for 1–2 staff (included)</span><br/><span className="text-[var(--sbx-mute)]">Employees beyond 2 add a small fee.</span></span>
-                    </label>
-                    <label className="flex items-start gap-3 text-sm">
-                      <input type="checkbox" checked={s.includeSingleSA} onChange={e=>s.setIncludeSingleSA(e.target.checked)} />
-                      <span><span className="font-medium">Single director Self Assessment (included)</span><br/><span className="text-[var(--sbx-mute)]">Untick to reduce price (−£10/mo).</span></span>
-                    </label>
-                  </>
-                )}
-
-                {(s.who==="partnership" || (s.who==="individual" && s.isSoleBusiness)) && (
-                  <>
-                    <div className="relative flex items-start gap-3 text-sm">
-                      <input type="checkbox" checked readOnly/>
-                      <span><span className="font-medium">Year-end accounts</span> (included)</span>
-                    </div>
-                    <div>
-                      <label className="block text-sm mb-1">Bookkeeping</label>
-                      <div className="flex flex-col gap-2">
-                        <label className="flex items-center gap-2 text-sm">
-                          <input type="radio" name="bk" checked={!s.bkDoWeDoIt} onChange={()=>s.setBkDoWeDoIt(false)}/> I’ll do my own bookkeeping
-                        </label>
-                        <label className="flex items-center gap-2 text-sm">
-                          <input type="radio" name="bk" checked={s.bkDoWeDoIt} onChange={()=>s.setBkDoWeDoIt(true)}/> Please do my bookkeeping
-                        </label>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {s.who==="partnership" && (
-                  <>
-                    <div className="relative flex items-start gap-3 text-sm">
-                      <input type="checkbox" checked readOnly/>
-                      <span><span className="font-medium">Partnership accounts & SA800</span> (included)</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <span>Partners needing Self Assessment:</span>
-                      <input type="number" min="0" value={s.numPartnersSA} onChange={e=>s.setNumPartnersSA(Number(e.target.value)||0)} className="w-28 border rounded-xl px-3 py-2"/>
-                    </div>
-                  </>
-                )}
-
-                {s.who==="landlord" && (
-                  <>
-                    <div className="relative flex items-start gap-3 text-sm">
-                      <input type="checkbox" checked readOnly/>
-                      <span><span className="font-medium">Self-Assessment for you</span> (included by default)</span>
-                    </div>
-                    <label className="flex items-start gap-3 text-sm">
-                      <input type="checkbox" checked={s.otherPartnerSA||false} onChange={e=>{s.otherPartnerSA=e.target.checked;}} />
-                      <span><span className="font-medium">Include Self-Assessment for joint partner</span></span>
-                    </label>
-                  </>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                {(s.who!=="landlord" && !(s.who==="individual" && !s.isSoleBusiness)) && (
-                  <div>
-                    <label className="block text-sm mb-1">Employees on payroll (incl directors)</label>
-                    <input type="number" min="0" value={s.employees} onChange={e=>s.setEmployees(Number(e.target.value)||0)} className="w-full border rounded-xl px-3 py-2"/>
-                  </div>
-                )}
-
-                {s.who==="limited" && (
-                  <>
-                    <div>
-                      <label className="block text-sm mb-1">Additional directors requiring Self Assessment</label>
-                      <input type="number" min="0" value={s.additionalDirectorSAs} onChange={e=>s.setAdditionalDirectorSAs(Number(e.target.value)||0)} className="w-full border rounded-xl px-3 py-2"/>
-                    </div>
-                    <label className="flex items-start gap-3 text-sm">
-                      <input type="checkbox" checked={s.formation} onChange={e=>s.setFormation(e.target.checked)} />
-                      <span><span className="font-medium">Company formation</span><br/><span className="text-[var(--sbx-mute)]">Free with our monthly packages (we recharge the £50 Companies House fee).</span></span>
-                    </label>
-                  </>
-                )}
-
-                {/* VAT returns toggle appears in What's Included only when VAT registered */}
-                {(s.vatRegistered && (s.who!=="landlord")) && (
-                  <label className="flex items-start gap-3 text-sm">
-                    <input type="checkbox" checked={s.vatReturns} onChange={e=>s.setVatReturns(e.target.checked)} />
-                    <span><span className="font-medium">VAT returns (averaged monthly)</span></span>
-                  </label>
-                )}
-              </div>
-            </div>
-          )
-        },
-
-        s5: {
-          step:"5",
-          title:"Specialist/technical work (one-off)",
-          subtitle:"Select any that apply",
-          content:(
-            <div className="grid md:grid-cols-2 gap-3">
-              <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={s.ihtReview} onChange={e=>s.setIhtReview(e.target.checked)}/> IHT review (£250)</label>
-              <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={s.trustsWork} onChange={e=>s.setTrustsWork(e.target.checked)}/> Trusts / family investment structures consult (£150)</label>
-              <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={s.cgtWork} onChange={e=>s.setCgtWork(e.target.checked)}/> CGT planning / disposal review (£150)</label>
-              <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={s.propIncorpReview} onChange={e=>s.setPropIncorpReview(e.target.checked)}/> Property incorporation (SDLT/CGT) review (£295)</label>
-              <div className="flex items-center gap-2 text-sm">
-                <input type="checkbox" checked={s.p11d} onChange={e=>s.setP11d(e.target.checked)}/>
-                <span>P11D per employee (£30)</span>
-                {s.p11d && (<><span className="ml-2">Qty:</span><input type="number" min="1" value={s.p11dEmployees} onChange={e=>s.setP11dEmployees(Number(e.target.value)||1)} className="w-20 border rounded-xl px-3 py-2"/></>)}
-              </div>
-              {(s.who!=="individual" && s.who!=="landlord") && (
-                <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={s.dirPayOptimiser} onChange={e=>s.setDirPayOptimiser(e.target.checked)}/> Director’s Pay Optimiser (free)</label>
-              )}
-            </div>
-          )
-        },
-
-        s6: {
-          step:"6",
-          title:"Financial advisory",
-          subtitle:"Want to talk it through?",
-          content:(
-            <div>
-              <p className="text-sm text-[var(--sbx-mute)] mb-3">
-                We can discuss structure, tax planning, property strategy, trusts, investments and CGT timing to tailor a plan.
-              </p>
-              <a className="inline-block px-4 py-2 rounded-xl bg-[var(--sbx-blue)] text-white text-sm font-semibold"
-                 href="mailto:ryan@sbxaccountants.com?subject=SBX%20Consultation%20Request&body=Hi%20SBX%2C%0A%0AI%27d%20like%20to%20book%20a%20consultation%20to%20discuss%20my%20quote%20and%20requirements.%0A%0AThanks%2C%0A">
-                 Email Ryan to book a consultation
-              </a>
-            </div>
-          )
-        }
-      };
-
-      // Build the list of actually visible keys, in the logical order they should be FOLLOWED.
-      // When CIS is shown, the order becomes s1 -> s2 -> s2a -> (s3?) -> s4 -> s5 -> s6
-      // When CIS is not shown: s1 -> s2 -> (s3?) -> s4 -> s5 -> s6
-      const seq = [];
-      seq.push('s1','s2');
-      if(showCIS) seq.push('s2a');
-      if(showRevenue) seq.push('s3');
-      seq.push('s4','s5','s6');
-
-      // MOBILE: simple one column, arrows all DOWN
-      const isDesktop = useIsDesktop();
       if(!isDesktop){
         return (
           <div className="grid grid-cols-1 gap-6">
-            {seq.map((k,i)=>(
-              <Section key={k} stepLabel={sections[k].step} arrow={"down"} title={sections[k].title} subtitle={sections[k].subtitle} isMobile>
-                {sections[k].content}
+            {sections.map((sec,i)=>(
+              <Section key={i} stepLabel={sec.step} arrow={"down"} title={sec.title} subtitle={sec.subtitle} isMobile>
+                {sec.content}
               </Section>
             ))}
-            <div className="no-print flex justify-end">
-              <button className="mt-4 px-5 py-2 rounded-xl bg-[var(--sbx-blue)] text-white font-semibold" onClick={onNext}>Get Quote</button>
-            </div>
           </div>
         );
       }
 
-      // DESKTOP: place into explicit grid areas so arrows always point correctly
+      // Desktop: grid areas are set by caller; arrows computed by overrides there.
+      return null; // not used directly on desktop in this build
+    }
+
+    function InputsSnake({ s, onNext }) {
+      const isDesktop = useIsDesktop();
+
+      const showCIS = s.isTrades && (s.who==="limited" || s.who==="partnership" || (s.who==="individual" && s.isSoleBusiness));
+      const showRevenue = !(s.who==="landlord" || (s.who==="individual" && !s.isSoleBusiness));
+
+      // Build sections
+      const s1 = {
+        key:"s1", step:"1", title:"Who is this for?", subtitle:"",
+        content:(
+          <div className="grid gap-3">
+            <label className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${s.who==="limited"?"border-[var(--sbx-blue)] bg-blue-50/40":"border-slate-200"}`}>
+              <input type="radio" name="who" checked={s.who==="limited"} onChange={()=>s.setWho("limited")} />
+              <div className="font-medium">Limited company</div>
+            </label>
+            <label className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${s.who==="partnership"?"border-[var(--sbx-blue)] bg-blue-50/40":"border-slate-200"}`}>
+              <input type="radio" name="who" checked={s.who==="partnership"} onChange={()=>s.setWho("partnership")} />
+              <div className="font-medium">Partnership</div>
+            </label>
+            <label className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${s.who==="individual"?"border-[var(--sbx-blue)] bg-blue-50/40":"border-slate-200"}`}>
+              <input type="radio" name="who" checked={s.who==="individual"} onChange={()=>s.setWho("individual")} />
+              <div className="font-medium">Individual / Sole Trader</div>
+            </label>
+            <label className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${s.who==="landlord"?"border-[var(--sbx-blue)] bg-blue-50/40":"border-slate-200"}`}>
+              <input type="radio" name="who" checked={s.who==="landlord"} onChange={()=>s.setWho("landlord")} />
+              <div className="font-medium">Personal Landlord</div>
+            </label>
+          </div>
+        )
+      };
+
+      const s2 = {
+        key:"s2", step:"2", title:"Business profile",
+        subtitle:(()=>{
+          if(s.who==="limited")   return "Company type, year end, and any SPV properties";
+          if(s.who==="partnership")return "Basic details — we'll tailor services below";
+          if(s.who==="individual") return "Tell us what fits you best";
+          if(s.who==="landlord")   return "Tell us about your property ownership";
+          return "";
+        })(),
+        content:(
+          <>
+            {s.who==="limited" && (
+              <div className="grid gap-3 mb-4">
+                <label className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${s.companyType==="standard"?"border-[var(--sbx-blue)] bg-blue-50/40":"border-slate-200"}`}>
+                  <input type="radio" name="coType" checked={s.companyType==="standard"} onChange={()=>s.setCompanyType("standard")}/>
+                  <div>
+                    <div className="font-medium">Standard Limited Company</div>
+                    <p className="text-sm text-[var(--sbx-mute)] mt-1">
+                      Our <strong>basic company package</strong> is <strong>£90pm</strong> and includes <em>year-end accounts & CT return, single director Self Assessment, payroll for 1–2 staff, confirmation statement filing (we cover the £34 fee), QuickBooks, and bookkeeping</em>. Price can reduce if you remove items.
+                    </p>
+                  </div>
+                </label>
+                <label className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${s.companyType==="property"?"border-[var(--sbx-blue)] bg-blue-50/40":"border-slate-200"}`}>
+                  <input type="radio" name="coType" checked={s.companyType==="property"} onChange={()=>s.setCompanyType("property")}/>
+                  <div className="font-medium">Property Investment Company (SPV)</div>
+                </label>
+              </div>
+            )}
+
+            <div className="grid md:grid-cols-2 gap-4">
+              {s.who==="individual" && (
+                <div className="p-3 border rounded-xl order-1">
+                  <p className="font-medium mb-2">For an individual, what is most appropriate for you?</p>
+                  <label className="flex items-center gap-2 text-sm mb-2">
+                    <input type="radio" name="indType" checked={s.isSoleBusiness} onChange={()=>s.setIsSoleBusiness(true)}/> I run a business (sole trader)
+                  </label>
+                  <label className="flex items-center gap-2 text-sm">
+                    <input type="radio" name="indType" checked={!s.isSoleBusiness} onChange={()=>s.setIsSoleBusiness(false)}/> I need a Self-Assessment for other untaxed income (investments/other)
+                  </label>
+                </div>
+              )}
+
+              {(s.who!=="landlord") && (
+                <div className={`flex items-center gap-2 ${s.who==="individual" ? "order-2" : ""}`}>
+                  <input id="trades" type="checkbox" checked={s.isTrades} onChange={e=>s.setIsTrades(e.target.checked)} />
+                  <label htmlFor="trades" className="text-sm">Trades / construction business</label>
+                </div>
+              )}
+
+              {s.who==="limited" && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <input id="dormant" type="checkbox" checked={s.dormant} onChange={e=>s.setDormant(e.target.checked)} />
+                    <label htmlFor="dormant" className="text-sm">Company is dormant / not trading</label>
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-1">Company year end date</label>
+                    <input type="date" value={s.yearEnd} onChange={e=>s.setYearEnd(e.target.value)} className="w-full border rounded-xl px-3 py-2"/>
+                    <p className="text-xs text-[var(--sbx-mute)] mt-1">We’ll calculate catch-up beyond 4 months free.</p>
+                  </div>
+                  {s.companyType==="property" && (
+                    <div>
+                      <label className="block text-sm mb-1">Number of properties in company (SPV)</label>
+                      <input type="number" min="0" value={s.spvProperties} onChange={e=>s.setSpvProperties(Number(e.target.value)||0)} className="w-full border rounded-xl px-3 py-2"/>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {s.who==="landlord" && (
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm mb-1">Personal rental properties</label>
+                    <input type="number" min="0" value={s.personalProperties} onChange={e=>s.setPersonalProperties(Number(e.target.value)||0)} className="w-full border rounded-xl px-3 py-2"/>
+                  </div>
+                  <div className="text-sm">
+                    <label className="mr-6"><input type="checkbox" checked={s.personallyOwned} onChange={e=>s.setPersonallyOwned(e.target.checked)}/> Personally owned</label>
+                    <label className=""><input type="checkbox" checked={s.jointlyOwned} onChange={e=>s.setJointlyOwned(e.target.checked)}/> Jointly owned</label>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {s.who==="limited" && (
+              <div className="text-xs text-[var(--sbx-mute)] mt-3">
+                New Ltd Co signup: <strong>4 months</strong> of backdated bookkeeping free.
+              </div>
+            )}
+          </>
+        )
+      };
+
+      const s2a = showCIS ? {
+        key:"s2a", step:"2a", title:"CIS options", subtitle:"Contractors and Subcontractors",
+        content:(
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="p-3 border rounded-xl">
+              <p className="font-medium mb-2">Contractor</p>
+              <label className="flex items-center gap-3 text-sm mb-2">
+                <input type="checkbox" checked={s.isCISContractor} onChange={e=>s.setIsCISContractor(e.target.checked)}/> I’m a CIS contractor
+              </label>
+              {s.isCISContractor && (
+                <>
+                  <label className="flex items-center gap-3 text-sm mb-2">
+                    <input className="sub-check" type="checkbox" checked={s.cisMonthlyReturns} onChange={e=>s.setCisMonthlyReturns(e.target.checked)}/> CIS monthly returns
+                  </label>
+                  <div className="flex items-center gap-2 text-sm mb-2">
+                    <span>Subcontractors:</span>
+                    <input type="number" min="0" value={s.cisSubbies} onChange={e=>s.setCisSubbies(Number(e.target.value)||0)} className="w-28 border rounded-xl px-3 py-2"/>
+                  </div>
+                  <div className="text-xs text-[var(--sbx-mute)]">Verification/setup: <strong>free</strong></div>
+                </>
+              )}
+            </div>
+            <div className="p-3 border rounded-xl">
+              <p className="font-medium mb-2">Subcontractor</p>
+              <label className="flex items-center gap-3 text-sm">
+                <input type="checkbox" checked={s.isCISSubcontractor} onChange={e=>s.setIsCISSubcontractor(e.target.checked)}/> I’m a CIS subcontractor
+              </label>
+              {s.isCISSubcontractor && (
+                <label className="flex items-center gap-3 text-sm mt-2">
+                  <input type="checkbox" checked={s.trackCISStatements} onChange={e=>s.setTrackCISStatements(e.target.checked)}/> Track my CIS deduction statements (free)
+                </label>
+              )}
+            </div>
+          </div>
+        )
+      } : null;
+
+      const s3 = showRevenue ? {
+        key:"s3", step:"3", title:"Revenue band & VAT", subtitle:"",
+        content:(
+          <div className="space-y-3">
+            <div className="grid md:grid-cols-3 gap-3">
+              {REVENUE_TIERS.map(t=>(
+                <label key={t.key} className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer ${s.tierKey===t.key?"border-[var(--sbx-blue)] bg-blue-50/40":"border-slate-200"}`}>
+                  <input type="radio" name="tier" checked={s.tierKey===t.key} onChange={()=>s.setTierKey(t.key)}/>
+                  <div className="font-medium">{t.label}</div>
+                </label>
+              ))}
+            </div>
+            <label className="flex items-center gap-3 text-sm">
+              <input type="checkbox" checked={s.vatRegistered} onChange={e=>{s.setVatRegistered(e.target.checked); s.setVatReturns(e.target.checked);}} />
+              Are you VAT registered?
+            </label>
+          </div>
+        )
+      } : null;
+
+      const s4 = {
+        key:"s4", step:"4", title:"What’s included / adjustments", subtitle:"Tailor your package",
+        content:(
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              {s.who==="limited" && (
+                <>
+                  <div className="relative locked flex items-start gap-3 text-sm">
+                    <input type="checkbox" checked readOnly/>
+                    <span><span className="font-medium">Year-end accounts & CT return</span> (included)</span>
+                  </div>
+                  <div className="flex items-start gap-3 text-sm">
+                    <input type="checkbox" checked readOnly/>
+                    <span><span className="font-medium">Confirmation statement</span> (we do this free & cover the £34 filing fee)</span>
+                  </div>
+                  <label className="flex items-start gap-3 text-sm">
+                    <input type="checkbox" checked={s.includeBookkeeping} onChange={e=>s.setIncludeBookkeeping(e.target.checked)} />
+                    <span><span className="font-medium">Full bookkeeping (included)</span><br/><span className="text-[var(--sbx-mute)]">Untick to remove (shows as a deduction).</span></span>
+                  </label>
+                  <label className="flex items-start gap-3 text-sm">
+                    <input type="checkbox" checked={s.includePayroll} onChange={e=>s.setIncludePayroll(e.target.checked)} />
+                    <span><span className="font-medium">Payroll for 1–2 staff (included)</span><br/><span className="text-[var(--sbx-mute)]">Employees beyond 2 add a small fee.</span></span>
+                  </label>
+                  <label className="flex items-start gap-3 text-sm">
+                    <input type="checkbox" checked={s.includeSingleSA} onChange={e=>s.setIncludeSingleSA(e.target.checked)} />
+                    <span><span className="font-medium">Single director Self Assessment (included)</span><br/><span className="text-[var(--sbx-mute)]">Untick to reduce price (−£10/mo).</span></span>
+                  </label>
+                </>
+              )}
+
+              {(s.who==="partnership" || (s.who==="individual" && s.isSoleBusiness)) && (
+                <>
+                  <div className="relative flex items-start gap-3 text-sm">
+                    <input type="checkbox" checked readOnly/>
+                    <span><span className="font-medium">Year-end accounts</span> (included)</span>
+                  </div>
+                  <div>
+                    <label className="block text-sm mb-1">Bookkeeping</label>
+                    <div className="flex flex-col gap-2">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input type="radio" name="bk" checked={!s.bkDoWeDoIt} onChange={()=>s.setBkDoWeDoIt(false)}/> I’ll do my own bookkeeping
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input type="radio" name="bk" checked={s.bkDoWeDoIt} onChange={()=>s.setBkDoWeDoIt(true)}/> Please do my bookkeeping
+                      </label>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {s.who==="partnership" && (
+                <>
+                  <div className="relative flex items-start gap-3 text-sm">
+                    <input type="checkbox" checked readOnly/>
+                    <span><span className="font-medium">Partnership accounts & SA800</span> (included)</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <span>Partners needing Self Assessment:</span>
+                    <input type="number" min="0" value={s.numPartnersSA} onChange={e=>s.setNumPartnersSA(Number(e.target.value)||0)} className="w-28 border rounded-xl px-3 py-2"/>
+                  </div>
+                </>
+              )}
+
+              {s.who==="landlord" && (
+                <>
+                  <div className="relative flex items-start gap-3 text-sm">
+                    <input type="checkbox" checked readOnly/>
+                    <span><span className="font-medium">Self-Assessment for you</span> (included by default)</span>
+                  </div>
+                  {s.jointlyOwned && (
+                    <label className="flex items-start gap-3 text-sm">
+                      <input type="checkbox" checked={s.otherPartnerSA} onChange={e=>s.setOtherPartnerSA(e.target.checked)} />
+                      <span><span className="font-medium">Include Self-Assessment for joint partner</span></span>
+                    </label>
+                  )}
+                </>
+              )}
+            </div>
+
+            <div className="space-y-3">
+              {(s.who!=="landlord" && !(s.who==="individual" && !s.isSoleBusiness)) && (
+                <div>
+                  <label className="block text-sm mb-1">Employees on payroll (incl directors)</label>
+                  <input type="number" min="0" value={s.employees} onChange={e=>s.setEmployees(Number(e.target.value)||0)} className="w-full border rounded-xl px-3 py-2"/>
+                </div>
+              )}
+
+              {s.who==="limited" && (
+                <>
+                  <div>
+                    <label className="block text-sm mb-1">Additional directors requiring Self Assessment</label>
+                    <input type="number" min="0" value={s.additionalDirectorSAs} onChange={e=>s.setAdditionalDirectorSAs(Number(e.target.value)||0)} className="w-full border rounded-xl px-3 py-2"/>
+                  </div>
+                  <label className="flex items-start gap-3 text-sm">
+                    <input type="checkbox" checked={s.formation} onChange={e=>s.setFormation(e.target.checked)} />
+                    <span><span className="font-medium">Company formation</span><br/><span className="text-[var(--sbx-mute)]">Free with our monthly packages (we recharge the £50 Companies House fee).</span></span>
+                  </label>
+                </>
+              )}
+
+              {(s.vatRegistered && s.who!=="landlord") && (
+                <label className="flex items-start gap-3 text-sm">
+                  <input type="checkbox" checked={s.vatReturns} onChange={e=>s.setVatReturns(e.target.checked)} />
+                  <span><span className="font-medium">VAT returns (averaged monthly)</span></span>
+                </label>
+              )}
+            </div>
+          </div>
+        )
+      };
+
+      const s5 = {
+        key:"s5", step:"5", title:"Specialist/technical work (one-off)", subtitle:"Select any that apply",
+        content:(
+          <div className="grid md:grid-cols-2 gap-3">
+            <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={s.ihtReview} onChange={e=>s.setIhtReview(e.target.checked)}/> IHT review (£250)</label>
+            <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={s.trustsWork} onChange={e=>s.setTrustsWork(e.target.checked)}/> Trusts / family investment structures consult (£150)</label>
+            <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={s.cgtWork} onChange={e=>s.setCgtWork(e.target.checked)}/> CGT planning / disposal review (£150)</label>
+            <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={s.propIncorpReview} onChange={e=>s.setPropIncorpReview(e.target.checked)}/> Property incorporation (SDLT/CGT) review (£295)</label>
+            <div className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={s.p11d} onChange={e=>s.setP11d(e.target.checked)}/>
+              <span>P11D per employee (£30)</span>
+              {s.p11d && (<><span className="ml-2">Qty:</span><input type="number" min="1" value={s.p11dEmployees} onChange={e=>s.setP11dEmployees(Number(e.target.value)||1)} className="w-20 border rounded-xl px-3 py-2"/></>)}
+            </div>
+            {(s.who!=="individual" && s.who!=="landlord") && (
+              <label className="flex items-center gap-3 text-sm"><input type="checkbox" checked={s.dirPayOptimiser} onChange={e=>s.setDirPayOptimiser(e.target.checked)}/> Director’s Pay Optimiser (free)</label>
+            )}
+          </div>
+        )
+      };
+
+      const s6 = {
+        key:"s6", step:"6", title:"Financial advisory", subtitle:"Want to talk it through?",
+        content:(
+          <div>
+            <p className="text-sm text-[var(--sbx-mute)] mb-3">
+              We can discuss structure, tax planning, property strategy, trusts, investments and CGT timing to tailor a plan.
+            </p>
+            <a className="inline-block px-4 py-2 rounded-xl bg-[var(--sbx-blue)] text-white text-sm font-semibold"
+               href="mailto:ryan@sbxaccountants.com?subject=SBX%20Consultation%20Request&body=Hi%20SBX%2C%0A%0AI%27d%20like%20to%20book%20a%20consultation%20to%20discuss%20my%20quote%20and%20requirements.%0A%0AThanks%2C%0A">
+               Email Ryan to book a consultation
+            </a>
+          </div>
+        )
+      };
+
+      const seq = [s1, s2, ...(showCIS?[s2a]:[]), ...(showRevenue?[s3]:[]), s4, s5, s6];
+
+      if(!isDesktop){
+        return (
+          <>
+            <SnakeGrid sections={seq}/>
+            <div className="no-print flex justify-end mt-6">
+              <button className="px-5 py-2 rounded-xl bg-[var(--sbx-blue)] text-white font-semibold" onClick={onNext}>Get Quote</button>
+            </div>
+          </>
+        );
+      }
+
+      /* Desktop: explicit areas so we can control arrow directions */
       let areas = "";
       if(showCIS && showRevenue){
-        // Row1: s1 s2 ; Row2: s3 s2a ; Row3: s4 s5 ; Row4: s6 .
         areas = `"s1 s2"
                  "s3 s2a"
                  "s4 s5"
-                 "s6 .  "`;
+                 "s6 . "`;
       } else if(showCIS && !showRevenue){
-        // Row1: s1 s2 ; Row2: s4 s2a ; Row3: s5 . ; Row4: s6 .
         areas = `"s1 s2"
                  "s4 s2a"
-                 "s5 .  "
-                 "s6 .  "`;
+                 "s5 . "
+                 "s6 . "`;
       } else if(!showCIS && showRevenue){
-        // Row1: s1 s2 ; Row2: s4 s3 ; Row3: s6 s5
         areas = `"s1 s2"
                  "s4 s3"
-                 "s6 s5"`;
+                 "s5 s6"`;  /* ensures 4 ↓ 5 and 5 → 6 */
       } else {
-        // no CIS, no revenue
         areas = `"s1 s2"
                  "s4 . "
-                 "s6 s5"`;
+                 "s5 s6"`;
       }
 
-      // map grid coords
       const rows = areas.trim().split("\n").map(r=>r.trim().replace(/"/g,''));
       const coords = {};
       rows.forEach((rowStr,ri)=>{
@@ -754,12 +727,12 @@
         });
       });
 
-      // compute arrow directions based on next item in SEQUENCE
+      const keys = seq.map(s=>s.key);
       const arrows = {};
-      for(let i=0;i<seq.length;i++){
-        const cur = seq[i], nxt = seq[i+1];
+      for(let i=0;i<keys.length;i++){
+        const cur=keys[i], nxt=keys[i+1];
         if(!nxt){ arrows[cur]=null; break; }
-        const a = coords[cur], b = coords[nxt];
+        const a=coords[cur], b=coords[nxt];
         if(!a || !b){ arrows[cur]=null; continue; }
         if(b.row===a.row && b.col>a.col) arrows[cur]="right";
         else if(b.row===a.row && b.col<a.col) arrows[cur]="left";
@@ -768,10 +741,11 @@
         else if(b.row>a.row && b.col>a.col) arrows[cur]="dr";
         else arrows[cur]="down";
       }
-      // Special rule from you: Step 2a arrow must always point LEFT
-      if(showCIS) arrows['s2a']="left";
+      /* Required overrides to exactly match your spec */
+      arrows['s2']='down';
+      if(showCIS){ arrows['s2a']='left'; arrows['s3']='down'; arrows['s4']='right'; arrows['s5']='dl'; }
+      else       { if(showRevenue){ arrows['s3']='left'; } arrows['s4']='down'; arrows['s5']='right'; }
 
-      // render in grid
       const gridStyle = {
         display:'grid',
         gap:'1.5rem',
@@ -779,16 +753,21 @@
         gridTemplateAreas: rows.map(r=>`"${r}"`).join("\n")
       };
 
+      const sectionMap = {s1,s2,s2a,s3,s4,s5,s6};
+
       return (
         <>
           <div style={gridStyle}>
-            {Object.entries(sections).filter(([k,v])=>v && seq.includes(k)).map(([k,v])=>(
-              <div key={k} style={{gridArea:k}}>
-                <Section stepLabel={v.step} arrow={arrows[k]} title={v.title} subtitle={v.subtitle}>
-                  {v.content}
-                </Section>
-              </div>
-            ))}
+            {Object.keys(coords).map(k=>{
+              const sec = sectionMap[k]; if(!sec) return null;
+              return (
+                <div key={k} style={{gridArea:k}}>
+                  <Section stepLabel={sec.step} arrow={arrows[k]} title={sec.title} subtitle={sec.subtitle}>
+                    {sec.content}
+                  </Section>
+                </div>
+              );
+            })}
           </div>
           <div className="no-print flex justify-end mt-6">
             <button className="px-5 py-2 rounded-xl bg-[var(--sbx-blue)] text-white font-semibold" onClick={onNext}>Get Quote</button>
@@ -797,7 +776,6 @@
       );
     }
 
-    /* -------------------- QUOTE PAGE -------------------- */
     function Quote({s,onBack}){
       const q = calcPricing(s);
       const printQuote = ()=>window.print();
@@ -883,6 +861,7 @@
 
     function App(){
       const s = useQuoteState();
+      const [page,setPage]=React.useState(1);
       return (
         <div className="max-w-6xl mx-auto px-4 py-6">
           <header className="no-print mb-6">
@@ -894,11 +873,11 @@
                   <p className="text-sm text-[var(--sbx-mute)]">Two quick steps. Clear, no-VAT pricing.</p>
                 </div>
               </div>
-              <span className="text-xs px-2 py-1 rounded-full bg-blue-50 text-[var(--sbx-blue)]">Step {s.step} of 2</span>
+              <span className="text-xs px-2 py-1 rounded-full bg-blue-50 text-[var(--sbx-blue)]">Step {page} of 2</span>
             </div>
           </header>
 
-          {s.step===1 ? <InputsSnake s={s} onNext={()=>s.setStep(2)} /> : <Quote s={s} onBack={()=>s.setStep(1)} />}
+          {page===1 ? <InputsSnake s={s} onNext={()=>setPage(2)} /> : <Quote s={s} onBack={()=>setPage(1)} />}
         </div>
       );
     }
