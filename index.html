@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SBX Quote Builder</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- TailwindCSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- React + ReactDOM (UMD builds) -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+  <!-- Babel for JSX support -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Montserrat', sans-serif;
+      background: #f8fafc;
+      margin: 0;
+      padding: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- React Root -->
+  <div id="root"></div>
+
+  <!-- React App -->
+  <script type="text/babel">
+    const App = () => {
+      return (
+        <div className="text-center mt-20">
+          <h1 className="text-3xl font-bold text-[#004aac]">
+            SBX Quote Builder Loaded ✅
+          </h1>
+          <p className="mt-4 text-gray-600">
+            If you can see this, React + Tailwind are working.
+          </p>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<App />);
+  </script>
+</body>
+</html>
