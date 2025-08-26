@@ -30,6 +30,7 @@
       color:var(--sbx-text);
     }
     .card{background:#fff;border-radius:16px;box-shadow:0 8px 24px rgba(2,6,23,0.08);min-height:var(--card-min-h)}
+    /* Step pill: clearer */
     .step-badge{
       display:inline-flex;align-items:center;gap:10px;
       padding:7px 14px;border-radius:999px;
@@ -47,21 +48,12 @@
     .vat-chk{width:18px;height:18px}
     select, input[type="number"], input[type="text"], input[type="date"]{font-size:15px}
 
-    /* Force uniform sizing inside Ltd inclusions block */
+    /* Force uniform sizing inside Ltd inclusions block (try harder) */
     .inc-ltd input[type="checkbox"]{
       width:20px;height:20px;min-width:20px;min-height:20px;
-      appearance:auto;-webkit-appearance:auto;line-height:1;display:inline-block;
+      appearance:auto;-webkit-appearance:auto;line-height:1;
+      display:inline-block;
     }
-
-    /* Sticky pill */
-    .sticky-pill{
-      position:sticky; top:-8px; z-index:40;
-      display:flex; align-items:center; gap:.5rem; justify-content:flex-end;
-      padding:.5rem .75rem; border-radius:999px;
-      background:#0b3a88; color:#fff; font-weight:600; font-size:13px;
-      box-shadow:0 8px 20px rgba(0,0,0,.15);
-    }
-    .sticky-pill small{opacity:.8;font-weight:500}
 
     @media (max-width: 1023px){
       .arrow-override-down .step-arrow::after{content:"↓"}
@@ -90,8 +82,6 @@
       background:#0f172a;color:#fff;font-size:12px;padding:6px 8px;border-radius:8px;
       white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.18);
     }
-    /* Title tooltips */
-    .tip { position:relative; }
   </style>
 </head>
 <body>
@@ -136,57 +126,6 @@
       return isDesktop;
     }
 
-    // --- share helpers ---
-    const LS_KEY = "sbx-quote-state-v1";
-    const encodeState = (obj)=>encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(obj)))));
-    const decodeState = (str)=>{
-      try { return JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(str))))); }
-      catch(e){ return null; }
-    };
-    const pickState = (s)=>({
-      who:s.who,
-      companyType:s.companyType,
-      tierKey:s.tierKey,
-      isTrades:s.isTrades,
-      dormant:s.dormant,
-      yearEnd:s.yearEnd,
-      ltdBookkeepingDone:s.ltdBookkeepingDone,
-      employees:s.employees,
-      spvProperties:s.spvProperties,
-      personalProperties:s.personalProperties,
-      includePayroll:s.includePayroll,
-      includeBookkeeping:s.includeBookkeeping,
-      includeSingleSA:s.includeSingleSA,
-      vatRegistered:s.vatRegistered,
-      vatReturns:s.vatReturns,
-      isSoleBusiness:s.isSoleBusiness,
-      saNonBusiness:s.saNonBusiness,
-      saSoleBusiness:s.saSoleBusiness,
-      bkDoWeDoIt:s.bkDoWeDoIt,
-      numPartnersSA:s.numPartnersSA,
-      partnershipType:s.partnershipType,
-      nonUkPartners:s.nonUkPartners,
-      additionalDirectorSAs:s.additionalDirectorSAs,
-      formation:s.formation,
-      isCISContractor:s.isCISContractor,
-      isCISSubcontractor:s.isCISSubcontractor,
-      cisMonthlyReturns:s.cisMonthlyReturns,
-      cisSubbies:s.cisSubbies,
-      trackCISStatements:s.trackCISStatements,
-      personallyOwned:s.personallyOwned,
-      jointlyOwned:s.jointlyOwned,
-      otherPartnerSA:s.otherPartnerSA,
-      ihtReview:s.ihtReview,
-      trustsWork:s.trustsWork,
-      cgtWork:s.cgtWork,
-      propIncorpReview:s.propIncorpReview,
-      p11d:s.p11d,
-      p11dEmployees:s.p11dEmployees,
-      dirPayOptimiser:s.dirPayOptimiser,
-      mortgageAdvice:s.mortgageAdvice,
-      aePension:s.aePension
-    });
-
     function useQuoteState(){
       const [step,setStep]=React.useState(1);
 
@@ -200,7 +139,7 @@
       const [ltdBookkeepingDone,setLtdBookkeepingDone]=React.useState("done"); // "done" | "not"
 
       // Counts
-      const [employees,setEmployees]=React.useState(1); // Ltd: ADDITIONAL employees count (beyond 1–2 if payroll)
+      const [employees,setEmployees]=React.useState(1); // incl directors (Ltd)
       const [spvProperties,setSpvProperties]=React.useState(1);
       const [personalProperties,setPersonalProperties]=React.useState(1); // landlord default = 1
 
@@ -309,7 +248,7 @@
         }
       },[companyType, who]);
 
-      // If Standard + Under £30k, behave like Start-up for pricing (payroll stays manual)
+      // If Standard + Under £30k, “behave” like Start-up for pricing (payroll stays manual)
       React.useEffect(()=>{
         if(who==="limited" && companyType==="standard" && tierKey==="u30"){
           setIncludePayroll(false);
@@ -332,10 +271,6 @@
           setSaNonBusiness(true);
         }
       },[who,isSoleBusiness]);
-
-      // Auto-clear hidden values
-      React.useEffect(()=>{ if (!includePayroll) { setEmployees(0); setAePension(false); } }, [includePayroll]);
-      React.useEffect(()=>{ if (!includeSingleSA) { setAdditionalDirectorSAs(0); } }, [includeSingleSA]);
 
       return {
         step,setStep,
@@ -361,10 +296,15 @@
     }
 
     function monthsBetween(a,b){
+      // full months between two dates (positive if b after a)
       const d1 = new Date(a), d2 = new Date(b);
       let months = (d2.getFullYear()-d1.getFullYear())*12 + (d2.getMonth()-d1.getMonth());
       if (d2.getDate() < d1.getDate()) months -= 1;
       return months;
+    }
+    function monthsSince(dateStr){
+      if(!dateStr) return 0;
+      return Math.max(0, monthsBetween(dateStr, new Date()));
     }
     function monthsSinceTaxYearStart(){
       const now = new Date();
@@ -405,54 +345,57 @@
 
       if(allowMonthly){
         if(s.who==="limited"){
+          // Treat Standard+Under£30k as Start-up for pricing
           const treatAsStartup = (s.companyType==="startup") || (s.companyType==="standard" && s.tierKey==="u30");
 
           if(treatAsStartup){
             const base = 55;
-            monthly.push({label:"Start-up Company Package",note:"Under £30k revenue · YE accounts & CT return · 1 director SA · CS filing (we cover £34) · QuickBooks · Bookkeeping",amount:base, help:"Low-rate package for new companies."});
+            monthly.push({label:"Start-up Company Package",note:"Under £30k revenue · YE accounts & CT return · 1 director SA · CS filing (we cover £34) · QuickBooks · Bookkeeping",amount:base});
             if(s.includePayroll){
-              monthly.push({label:"Payroll (1–2)",amount:10, help:"Covers RTI submissions for up to 2 staff."});
-              if(s.employees>0) monthly.push({label:"Payroll add-on (additional employees)",amount:4*s.employees, help:"£4 per extra employee beyond 1–2."});
-              if(s.aePension)   monthly.push({label:"Auto-enrolment pension administration",amount:6 + Math.max(0,s.employees)*1, help:"Set-up/ongoing assessment & submissions."});
+              monthly.push({label:"Payroll (1–2)",amount:10});
+              if(s.aePension) monthly.push({label:"Auto-enrolment pension administration",amount:6 + Math.max(0,s.employees)*1});
             }
             if(s.vatRegistered && s.vatReturns){
-              monthly.push({label:"VAT Returns (averaged monthly)",amount:25, help:"MTD VAT return preparation & filing."});
+              monthly.push({label:"VAT Returns (averaged monthly)",amount:25});
             }
           } else if(s.companyType==="property"){
             const spvBase = (55 + Math.max(0,s.spvProperties-1)*5) * m;
             monthly.push({
               label:"Property Company Package (SPV)",
               note:`Includes YE accounts & CT return, confirmation statement (we cover £34), bookkeeping · ${s.spvProperties} propert${s.spvProperties===1?'y':'ies'}`,
-              amount:spvBase, help:"SPV pricing scales with number of properties."
+              amount:spvBase
             });
             if(s.includePayroll){
-              monthly.push({label:"Payroll (1–2)", amount:10, help:"Payroll for up to 2 employees."});
-              if(s.employees>0) monthly.push({label:"Payroll add-on (additional employees)",amount:4*s.employees, help:"£4 per additional employee."});
-              if(s.aePension)   monthly.push({label:"Auto-enrolment pension administration",amount:6 + Math.max(0,s.employees)*1, help:"Auto-enrolment admin."});
+              const extra = Math.max(0, s.employees) * 10;
+              monthly.push({label:"Payroll (SPV)", amount:Math.max(10, extra)});
+              if(s.aePension) monthly.push({label:"Auto-enrolment pension administration",amount:6 + Math.max(0,s.employees)*1});
             }
             if(s.includeSingleSA){
-              monthly.push({label:"Single director Self Assessment (SPV add-on)", amount:10, help:"Director SA when needed with SPV."});
+              monthly.push({label:"Single director Self Assessment (SPV add-on)", amount:10});
             }
             if(s.vatRegistered && s.vatReturns){
-              monthly.push({label:"VAT Returns (averaged monthly)",amount:25, help:"MTD VAT returns."});
+              monthly.push({label:"VAT Returns (averaged monthly)",amount:25});
             }
           } else {
             // Standard company package: base £90 (no payroll included)
-            const base = 90;
+            const base = 90; // fixed as requested
             monthly.push({
               label:"Standard Company Package",
               note:"For >£30k revenue · YE accounts & CT return · single director Self Assessment · confirmation statement (we cover £34) · QuickBooks · bookkeeping · Price can reduce if you remove items.",
-              amount:base, help:"Core compliance & bookkeeping."
+              amount:base
             });
+            // Optional add-ons
             if(s.includePayroll){
-              monthly.push({label:"Payroll (1–2)", amount:10, help:"Payroll for up to 2 employees."});
-              if(s.employees>0) monthly.push({label:"Payroll add-on (additional employees)",amount:4*s.employees, help:"£4 per extra employee."});
-              if(s.aePension)   monthly.push({label:"Auto-enrolment pension administration",amount:6 + Math.max(0,s.employees)*1, help:"Auto-enrolment admin."});
+              monthly.push({label:"Payroll (1–2)", amount:10});
+              // extras beyond 2 if specified
+              const extra = Math.max(0, s.employees - 2) * 6;
+              if(extra>0) monthly.push({label:"Payroll add-on (over 2 employees)",amount:extra});
+              if(s.aePension) monthly.push({label:"Auto-enrolment pension administration",amount:6 + Math.max(0,s.employees)*1});
             }
-            if(!s.includeBookkeeping) monthly.push({label:"Bookkeeping removed", amount:-20, help:"Discount if you keep your own books."});
-            if(!s.includeSingleSA)    monthly.push({label:"Single director SA removed", amount:-10, help:"Discount if director SA handled elsewhere."});
+            if(!s.includeBookkeeping) monthly.push({label:"Bookkeeping removed", amount:-20});
+            if(!s.includeSingleSA)    monthly.push({label:"Single director SA removed", amount:-10});
             if(s.vatRegistered && s.vatReturns){
-              monthly.push({label:"VAT Returns (averaged monthly)",amount:25, help:"MTD VAT return prep & filing."});
+              monthly.push({label:"VAT Returns (averaged monthly)",amount:25});
             }
           }
         } else if(s.who==="partnership"){
@@ -462,15 +405,15 @@
           monthly.push({
             label:"Partnership Package (monthly)",
             note: (s.bkDoWeDoIt ? "Includes bookkeeping & QuickBooks subscription" : "Excludes bookkeeping (you’ll do it)") + (s.partnershipType==="llp" ? " · LLP uplift applied" : ""),
-            amount, help:"Ongoing compliance (SA800), scaled by revenue."
+            amount
           });
           if(s.bkDoWeDoIt){
             bkMonthlyForCatchup = amount;
           }
-          if(s.vatRegistered && s.vatReturns) monthly.push({label:"VAT Returns (averaged monthly)",amount:20, help:"MTD VAT returns."});
+          if(s.vatRegistered && s.vatReturns) monthly.push({label:"VAT Returns (averaged monthly)",amount:20});
           if(s.employees>0){
-            monthly.push({label:"Payroll add-on",amount:10*s.employees, help:"£10 per employee."});
-            if(s.aePension) monthly.push({label:"Auto-enrolment pension administration",amount:6 + Math.max(0,s.employees)*1, help:"Auto-enrolment admin."});
+            monthly.push({label:"Payroll add-on",amount:10*s.employees});
+            if(s.aePension) monthly.push({label:"Auto-enrolment pension administration",amount:6 + Math.max(0,s.employees)*1});
           }
         } else if(s.who==="individual" && s.isSoleBusiness){
           const pkg = s.bkDoWeDoIt ? SOLE_PKG_SBX_BK : SOLE_PKG_CLIENT_BK;
@@ -478,31 +421,31 @@
           monthly.push({
             label:"Sole Trader Package (monthly, after initial year)",
             note: s.bkDoWeDoIt ? "We do bookkeeping (includes QuickBooks)" : "You’ll do your own bookkeeping",
-            amount, help:"Ongoing support; scales by revenue."
+            amount
           });
-          if(s.vatRegistered && s.vatReturns) monthly.push({label:"VAT Returns (averaged monthly)",amount:15, help:"MTD VAT returns."});
-          if(s.employees>0) monthly.push({label:"Payroll add-on",amount:10*s.employees, help:"£10 per employee."});
+          if(s.vatRegistered && s.vatReturns) monthly.push({label:"VAT Returns (averaged monthly)",amount:15});
+          if(s.employees>0) monthly.push({label:"Payroll add-on",amount:10*s.employees});
         }
 
-        // CIS monthly (Contractor)
+        // CIS monthly (Contractor) — includes nil returns at £15
         if(s.isTrades && s.isCISContractor && s.cisMonthlyReturns){
           const amt = cisMonthlyCost(s.cisSubbies);
           monthly.push({
-            label: s.cisSubbies===0 ? "CIS Monthly Returns (nil return submissions)" : "CIS Monthly Returns (contractor)",
-            note: s.cisSubbies===0 ? "" : `for ${s.cisSubbies} subcontractor${s.cisSubbies===1?'':'s'}`,
-            amount:amt, help:"Monthly CIS returns filing."
+            label:"CIS Monthly Returns (contractor)",
+            note:`for ${s.cisSubbies} subcontractor${s.cisSubbies===1?'':'s'}`,
+            amount:amt
           });
         }
       }
 
       // ---- ONE-OFFS ----
       if(s.who==="limited" && s.dormant){
-        oneoff.push({label:"Dormant Accounts & Confirmation Statement",amount:200, help:"Dormant company compliance."});
+        oneoff.push({label:"Dormant Accounts & Confirmation Statement",amount:200});
       }
 
       if(s.who==="limited" && s.formation){
-        oneoff.push({label:"Company formation (SBX fee)",note:"Free with our monthly packages",amount:0, help:"Our formation fee is waived with a monthly package."});
-        oneoff.push({label:"Companies House incorporation fee",note:"We will recharge the cost of £50 to you after",amount:50, help:"Statutory incorporation fee."});
+        oneoff.push({label:"Company formation (SBX fee)",note:"Free with our monthly packages",amount:0});
+        oneoff.push({label:"Companies House incorporation fee",note:"We will recharge the cost of £50 to you after",amount:50});
       }
 
       // LIMITED backdating / compliance rules
@@ -512,26 +455,27 @@
         const tmpMonthlyTotal = monthly.reduce((a,b)=>a+(b.amount||0),0);
 
         if(ye < now){
-          // Past year-end: one-off compliance (factorized, but hidden from UI text)
+          // PAST year-end: one-off compliance only
+          // If bookkeeping done -> 7.5 months; else 10 months (charged at once)
           const monthsFactor = (s.ltdBookkeepingDone==="done") ? 7.5 : 10;
           if(tmpMonthlyTotal>0){
             oneoff.push({
-              label:`Year-end compliance package (${s.ltdBookkeepingDone==="done"?"bookkeeping done":"no bookkeeping"} for that year)`,
+              label:`Year-end compliance package (${s.ltdBookkeepingDone==="done"?"BK done":"no BK"} for that year)`,
               note:`Charged once for the year just ended`,
-              amount:monthsFactor * tmpMonthlyTotal,
-              help:"Covers full compliance for the completed year."
+              amount:monthsFactor * tmpMonthlyTotal
             });
           }
         } else {
-          // Future year-end: current-year catch-up beyond first 4 months
-          const start = new Date(ye); start.setFullYear(start.getFullYear()-1);
-          const elapsed = Math.max(0, monthsBetween(start, now));
+          // FUTURE year-end: current-year catch-up (beyond first 4 months)
+          // Determine period start = YE - 12 months
+          const start = new Date(ye);
+          start.setFullYear(start.getFullYear()-1);
+          const elapsed = Math.max(0, monthsBetween(start, now)); // months in the current period so far
           const billable = Math.max(0, elapsed - 4);
           if(billable>0 && tmpMonthlyTotal>0){
             oneoff.push({
               label:`Bookkeeping catch-up — ${billable} month${billable>1?'s':''} (based on your monthly package)`,
-              amount:billable*tmpMonthlyTotal,
-              help:"Covers bookkeeping already elapsed in the current year."
+              amount:billable*tmpMonthlyTotal
             });
           }
         }
@@ -541,49 +485,48 @@
       if(s.who==="partnership" && s.bkDoWeDoIt){
         const months = monthsSinceTaxYearStart();
         const billable = Math.max(0, months - 4);
-        if(billable>0 && (PSHIP_PKG_SBX_BK[s.tierKey] ?? 0)>0){
-          const amount = (s.partnershipType==="llp" ? (PSHIP_PKG_SBX_BK[s.tierKey]*LLP_MARKUP) : PSHIP_PKG_SBX_BK[s.tierKey]);
-          oneoff.push({label:`Bookkeeping catch-up (partnership) — ${billable} month${billable>1?'s':''} from start of tax year`,amount:billable*amount, help:"Covers elapsed period since 6 April."});
+        if(billable>0 && bkMonthlyForCatchup>0){
+          oneoff.push({label:`Bookkeeping catch-up (partnership) — ${billable} month${billable>1?'s':''} from start of tax year`,amount:billable*bkMonthlyForCatchup});
         }
       }
 
-      // Individual one-offs — SA scales from £200
+      // Individual one-offs — SA scales from £200 with tier multipliers
       if(s.who==="individual" && s.isSoleBusiness && s.saSoleBusiness){
         const base = 200;
         const sa = Math.round(base * (REVENUE_TIERS.find(t=>t.key===s.tierKey)?.multiplier || 1));
-        oneoff.push({label:"Self-Assessment (sole trader business)",note:REVENUE_TIERS.find(t=>t.key===s.tierKey).label,amount:sa, help:"Annual SA incl. sole-trader accounts."});
+        oneoff.push({label:"Self-Assessment (sole trader business)",note:REVENUE_TIERS.find(t=>t.key===s.tierKey).label,amount:sa});
       }
       if(s.who==="individual" && !s.isSoleBusiness && s.saNonBusiness){
-        oneoff.push({label:"Self-Assessment (personal — investments/other)",amount:150, help:"SA for personal untaxed income."});
+        oneoff.push({label:"Self-Assessment (personal — investments/other)",amount:150});
       }
 
       // Landlord one-offs
       if(s.who==="landlord"){
         const base = 150 + Math.max(0, s.personalProperties-1)*20;
-        oneoff.push({label:"Self-Assessment (personal landlord)",note:`${s.personalProperties} rental propert${s.personalProperties===1?'y':'ies'}`,amount:base, help:"SA incl. rental schedules."});
+        oneoff.push({label:"Self-Assessment (personal landlord)",note:`${s.personalProperties} rental propert${s.personalProperties===1?'y':'ies'}`,amount:base});
         if(s.jointlyOwned && s.otherPartnerSA){
-          oneoff.push({label:"Self-Assessment for joint partner (landlord)",amount:base, help:"SA for joint owner."});
+          oneoff.push({label:"Self-Assessment for joint partner (landlord)",amount:base});
         }
       }
 
       // Extras
       if(s.who==="partnership" && s.numPartnersSA>0){
-        oneoff.push({label:`Partners' Self Assessments ×${s.numPartnersSA}`,note:"Billed initially; from year two this is reflected in the monthly package.",amount:150*s.numPartnersSA, help:"Partner-level SA returns."});
+        oneoff.push({label:`Partners' Self Assessments ×${s.numPartnersSA}`,note:"Billed initially; from year two this is reflected in the monthly package.",amount:150*s.numPartnersSA});
       }
-      if(s.who==="limited" && s.includeSingleSA && s.additionalDirectorSAs>0){
-        oneoff.push({label:`Additional directors (Self Assessment) ×${s.additionalDirectorSAs}`,amount:120*s.additionalDirectorSAs, help:"Extra director SA returns."});
+      if(s.who==="limited" && s.additionalDirectorSAs>0){
+        oneoff.push({label:`Additional directors (Self Assessment) ×${s.additionalDirectorSAs}`,amount:120*s.additionalDirectorSAs});
       }
       if(s.isTrades && s.isCISSubcontractor && s.trackCISStatements){
-        oneoff.push({label:"CIS statements tracking (subcontractor)",note:"Free",amount:0, help:"We track & reconcile CIS deductions."});
+        oneoff.push({label:"CIS statements tracking (subcontractor)",note:"Free",amount:0});
       }
-      if(s.ihtReview)        oneoff.push({label:"IHT review & recommendations",amount:250, help:"Inheritance tax review."});
-      if(s.trustsWork)       oneoff.push({label:"Trusts / family investment structures – consult",amount:150, help:"Structuring discussion."});
-      if(s.cgtWork)          oneoff.push({label:"CGT planning / disposal review",amount:150, help:"Capital gains timing & reliefs."});
-      if(s.propIncorpReview) oneoff.push({label:"Property incorporation (SDLT/CGT) review",amount:295, help:"Feasibility & tax review."});
-      if(s.p11d)             oneoff.push({label:`P11D preparation ×${s.p11dEmployees}`,amount:30*s.p11dEmployees, help:"Benefits in kind forms."});
-      if(s.mortgageAdvice)   oneoff.push({label:"Mortgage/portfolio finance advice session",note:"BTL structure, product options, affordability & tax interface",amount:120, help:"Independent finance discussion."});
+      if(s.ihtReview)        oneoff.push({label:"IHT review & recommendations",amount:250});
+      if(s.trustsWork)       oneoff.push({label:"Trusts / family investment structures – consult",amount:150});
+      if(s.cgtWork)          oneoff.push({label:"CGT planning / disposal review",amount:150});
+      if(s.propIncorpReview) oneoff.push({label:"Property incorporation (SDLT/CGT) review",amount:295});
+      if(s.p11d)             oneoff.push({label:`P11D preparation ×${s.p11dEmployees}`,amount:30*s.p11dEmployees});
+      if(s.mortgageAdvice)   oneoff.push({label:"Mortgage/portfolio finance advice session",note:"BTL structure, product options, affordability & tax interface",amount:120});
       if(s.dirPayOptimiser && s.who==="limited" && s.companyType!=="property"){
-        oneoff.push({label:"Director’s Pay Optimiser (tailored summary)",note:"Free",amount:0, help:"Optimal salary/dividend mix."});
+        oneoff.push({label:"Director’s Pay Optimiser (tailored summary)",note:"Free",amount:0});
       }
 
       const monthlyTotal = monthly.reduce((a,b)=>a+(b.amount||0),0);
@@ -607,26 +550,11 @@
       return null;
     }
 
-    // mini util for labels in summary
-    function entityLabel(s){
-      if(s.who==="limited"){
-        if(s.companyType==="startup") return "Ltd • Start-up";
-        if(s.companyType==="property") return `Ltd • SPV (${s.spvProperties||0} prop${s.spvProperties===1?'':'s'})`;
-        return "Ltd • Standard";
-      }
-      if(s.who==="partnership") return `Partnership${s.partnershipType==="llp"?" (LLP)":""}`;
-      if(s.who==="individual") return s.isSoleBusiness ? "Sole Trader" : "Individual (SA only)";
-      if(s.who==="landlord") return "Personal Landlord";
-      return "—";
-    }
-
     function InputsSnake({ s, onNext }) {
       const isDesktop = useIsDesktop();
 
       const showCIS = s.isTrades && (s.who==="limited" || s.who==="partnership" || (s.who==="individual" && s.isSoleBusiness));
       let showRevenue = !(s.who==="landlord" || (s.who==="individual" && !s.isSoleBusiness));
-
-      const qPreview = calcPricing(s);
 
       const s1 = {
         key:"s1", step:"1", title:"Who is this for?", subtitle:"",
@@ -707,7 +635,7 @@
                   </label>
                 </div>
 
-                {/* Year end + SPV properties side-by-side */}
+                {/* Year end + SPV properties side-by-side, spaced */}
                 <div className="grid md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm mb-1">Company year end date</label>
@@ -718,27 +646,21 @@
                     {!!s.yearEnd && new Date(s.yearEnd) < new Date() && !s.dormant && (
                       <div className="mt-2">
                         <label className="block text-sm mb-1">Bookkeeping status for that year</label>
-                        <select value={s.ltdBookkeepingDone} onChange={e=>s.setLtdBookkeepingDone(e.target.value)} className="w-full md:w-[420px] border rounded-xl px-3 py-2 text-sm">
+                        <select value={s.ltdBookkeepingDone} onChange={e=>s.setLtdBookkeepingDone(e.target.value)} className="w-full md:w-[260px] border rounded-xl px-3 py-2 text-sm">
                           <option value="done">We’ve done our bookkeeping for that year</option>
                           <option value="not">We haven’t done bookkeeping for that year</option>
                         </select>
+                        <p className="text-xs text-[var(--sbx-mute)] mt-1">Used to set the one-off compliance charge (7.5× if done, 10× if not).</p>
                       </div>
                     )}
                   </div>
                   {s.companyType==="property" && (
-                    <div>
-                      <label className="block text-sm mb-1">Number of properties in SPV</label>
-                      <input type="number" min="0" value={s.spvProperties} onChange={e=>s.setSpvProperties(Math.max(0, Number(e.target.value)||0))} className="w-full md:w-[220px] border rounded-xl px-3 py-2"/>
+                    <div className="md:ml-2">
+                      <label className="block text-sm mb-1">Number of properties in company (SPV)</label>
+                      <input type="number" min="0" value={s.spvProperties} onChange={e=>s.setSpvProperties(Number(e.target.value)||0)} className="w-full md:w-[220px] border rounded-xl px-3 py-2"/>
                     </div>
                   )}
                 </div>
-
-                {/* Tiny guard */}
-                {s.isTrades && s.isCISContractor && s.cisSubbies>100 && (
-                  <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-2">
-                    That’s a large number of subcontractors — we can still help, but pricing may need a custom review.
-                  </div>
-                )}
               </div>
             )}
 
@@ -782,6 +704,7 @@
                     <input className="radio-lg" type="radio" name="indType" checked={!s.isSoleBusiness} onChange={()=>s.setIsSoleBusiness(false)}/> I need a Self-Assessment for other untaxed income (investments/other)
                   </label>
                 </div>
+                {/* Trades toggle OUTSIDE the box */}
                 {s.isSoleBusiness && (
                   <label className="flex items-center gap-2 text-sm mt-2">
                     <input className="chk" type="checkbox" checked={s.isTrades} onChange={e=>s.setIsTrades(e.target.checked)}/> Trades / construction business
@@ -795,7 +718,7 @@
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm mb-1">Personal rental properties</label>
-                  <input type="number" min="1" value={s.personalProperties} onChange={e=>s.setPersonalProperties(Math.max(1, Number(e.target.value)||1))} className="w-full border rounded-xl px-3 py-2"/>
+                  <input type="number" min="1" value={s.personalProperties} onChange={e=>s.setPersonalProperties(Number(e.target.value)||1)} className="w-full border rounded-xl px-3 py-2"/>
                 </div>
                 <div className="text-sm">
                   <label className="mr-6"><input className="chk" type="checkbox" checked={s.personallyOwned} onChange={e=>s.setPersonallyOwned(e.target.checked)}/> Personally owned</label>
@@ -835,7 +758,7 @@
                   </label>
                   <div className="flex items-center gap-2 text-sm mb-2">
                     <span>Subcontractors:</span>
-                    <input type="number" min="0" value={s.cisSubbies} onChange={e=>s.setCisSubbies(Math.max(0, Number(e.target.value)||0))} className="w-28 border rounded-xl px-3 py-2"/>
+                    <input type="number" min="0" value={s.cisSubbies} onChange={e=>s.setCisSubbies(Number(e.target.value)||0)} className="w-28 border rounded-xl px-3 py-2"/>
                   </div>
                   <div className="text-xs text-[var(--sbx-mute)]">Verification/setup: <strong>free</strong></div>
                 </>
@@ -986,54 +909,36 @@
             </div>
 
             <div className="space-y-3">
-              {/* PARTNERS needing SA */}
+              {/* PARTNERS needing SA (top-right) */}
               {s.who==="partnership" && (
                 <div>
                   <label className="block text-sm mb-1">Partners requiring Self Assessment</label>
-                  <input type="number" min="0" value={s.numPartnersSA} onChange={e=>s.setNumPartnersSA(Math.max(0, Number(e.target.value)||0))} className="w-full border rounded-xl px-3 py-2"/>
+                  <input type="number" min="0" value={s.numPartnersSA} onChange={e=>s.setNumPartnersSA(Number(e.target.value)||0)} className="w-full border rounded-xl px-3 py-2"/>
                   <p className="text-xs text-[var(--sbx-mute)] mt-1">Billed initially (£150 each). From year two this is reflected in the monthly package.</p>
                 </div>
               )}
 
-              {/* Employees input */}
               {!(s.who==="landlord" || (s.who==="individual" && !s.isSoleBusiness)) && (
-                s.who==="limited"
-                  ? (s.includePayroll && (
-                      <div>
-                        <label className="block text-sm mb-1">{payrollLabel}</label>
-                        <input type="number" min="0" value={s.employees} onChange={e=>s.setEmployees(Math.max(0, Number(e.target.value)||0))} className="w-full border rounded-xl px-3 py-2"/>
-                      </div>
-                    ))
-                  : (
-                      <div>
-                        <label className="block text-sm mb-1">{payrollLabel}</label>
-                        <input type="number" min="0" value={s.employees} onChange={e=>s.setEmployees(Math.max(0, Number(e.target.value)||0))} className="w-full border rounded-xl px-3 py-2"/>
-                      </div>
-                    )
+                <div>
+                  <label className="block text-sm mb-1">{payrollLabel}</label>
+                  <input type="number" min="0" value={s.employees} onChange={e=>s.setEmployees(Number(e.target.value)||0)} className="w-full border rounded-xl px-3 py-2"/>
+                </div>
               )}
 
               {s.who==="limited" && (
                 <>
-                  {/* Additional directors SA: only show if Single Director SA is ticked */}
-                  {s.includeSingleSA && (
-                    <div>
-                      <label className="block text-sm mb-1">Additional directors requiring Self Assessment</label>
-                      <input type="number" min="0" value={s.additionalDirectorSAs} onChange={e=>s.setAdditionalDirectorSAs(Math.max(0, Number(e.target.value)||0))} className="w-full border rounded-xl px-3 py-2"/>
-                    </div>
-                  )}
-
+                  <div>
+                    <label className="block text-sm mb-1">Additional directors requiring Self Assessment</label>
+                    <input type="number" min="0" value={s.additionalDirectorSAs} onChange={e=>s.setAdditionalDirectorSAs(Number(e.target.value)||0)} className="w-full border rounded-xl px-3 py-2"/>
+                  </div>
                   <label className="flex items-start gap-3 text-sm">
                     <input className="sub-check" type="checkbox" checked={s.formation} onChange={e=>s.setFormation(e.target.checked)} />
                     <span><span className="font-medium">Company formation</span><br/><span className="text-[var(--sbx-mute)]">Free with our monthly packages (we recharge the £50 Companies House fee to you after).</span></span>
                   </label>
-
-                  {/* AE toggle only when payroll is on */}
-                  {s.includePayroll && (
-                    <label className="flex items-start gap-3 text-sm">
-                      <input className="chk" type="checkbox" checked={s.aePension} onChange={e=>s.setAePension(e.target.checked)} />
-                      <span><span className="font-medium">Auto-enrolment pension administration</span> (optional)</span>
-                    </label>
-                  )}
+                  <label className="flex items-start gap-3 text-sm">
+                    <input className="chk" type="checkbox" checked={s.aePension} onChange={e=>s.setAePension(e.target.checked)} />
+                    <span><span className="font-medium">Auto-enrolment pension administration</span> (optional)</span>
+                  </label>
                 </>
               )}
 
@@ -1044,7 +949,7 @@
                 </label>
               )}
 
-              {(s.vatRegistered && s.who!=="landlord") &(
+              {(s.vatRegistered && s.who!=="landlord") && (
                 <label className="flex items-start gap-3 text-sm">
                   <input className="vat-chk" type="checkbox" checked={s.vatReturns} onChange={e=>s.setVatReturns(e.target.checked)} />
                   <span><span className="font-medium">VAT returns (averaged monthly)</span></span>
@@ -1066,7 +971,7 @@
             <div className="flex items-center gap-2 text-sm">
               <input className="chk" type="checkbox" checked={s.p11d} onChange={e=>s.setP11d(e.target.checked)}/>
               <span>P11D per employee (£30)</span>
-              {s.p11d && (<><span className="ml-2">Qty:</span><input type="number" min="1" value={s.p11dEmployees} onChange={e=>s.setP11dEmployees(Math.max(1, Number(e.target.value)||1))} className="w-20 border rounded-xl px-3 py-2"/></>)}
+              {s.p11d && (<><span className="ml-2">Qty:</span><input type="number" min="1" value={s.p11dEmployees} onChange={e=>s.setP11dEmployees(Number(e.target.value)||1)} className="w-20 border rounded-xl px-3 py-2"/></>)}
             </div>
             {s.who==="limited" && s.companyType!=="property" && (
               <label className="flex items-center gap-3 text-sm"><input className="chk" type="checkbox" checked={s.dirPayOptimiser} onChange={e=>s.setDirPayOptimiser(e.target.checked)}/> Director’s Pay Optimiser (free)</label>
@@ -1113,18 +1018,6 @@
       if(!isDesktop){
         return (
           <>
-            <div className="no-print sticky-pill mb-3">
-              <small>{entityLabel(s)}</small>
-              <span>•</span>
-              <span>{currency(qPreview.monthlyTotal)}/mo</span>
-              {qPreview.oneOffTotal>0 && <span>• One-off {currency(qPreview.oneOffTotal)}</span>}
-              <button
-                className="ml-2 px-2 py-1 rounded-lg bg-white/10 text-white text-xs"
-                onClick={()=>navigator.clipboard.writeText(window.location.href)}
-                title="Copy share link"
-              >Copy link</button>
-            </div>
-
             <SnakeGrid sections={seqBase}/>
             <div className="no-print flex justify-end mt-6">
               <button className="px-5 py-2 rounded-xl bg-[var(--sbx-blue)] text-white font-semibold" onClick={onNext}>Get Quote</button>
@@ -1141,7 +1034,7 @@
       } else if (s.who==="landlord") {
         areas = `"s1 s2"
                  "s5 s4"
-                 "s6 ."`; 
+                 "s6 ."`; /* s2 -> s4 (down), s4 -> s5 (left), s5 -> s6 (down) */
       } else if(showCIS && showRevenue){
         areas = `"s1 s2"
                  "s3 s2a"
@@ -1200,18 +1093,6 @@
 
       return (
         <>
-          <div className="no-print sticky-pill mb-3">
-            <small>{entityLabel(s)}</small>
-            <span>•</span>
-            <span>{currency(qPreview.monthlyTotal)}/mo</span>
-            {qPreview.oneOffTotal>0 && <span>• One-off {currency(qPreview.oneOffTotal)}</span>}
-            <button
-              className="ml-2 px-2 py-1 rounded-lg bg-white/10 text-white text-xs"
-              onClick={()=>navigator.clipboard.writeText(window.location.href)}
-              title="Copy share link"
-            >Copy link</button>
-          </div>
-
           <div style={gridStyle}>
             {Object.keys(coords).map(k=>{
               const sec = sectionMap[k]; if(!sec) return null;
@@ -1232,23 +1113,6 @@
       );
     }
 
-    function priceHelpFor(label){
-      const map = {
-        "Standard Company Package":"Core compliance & bookkeeping for trading companies.",
-        "Start-up Company Package":"Low-rate package for new companies under £30k.",
-        "Property Company Package (SPV)":"Scaled by number of properties.",
-        "Payroll (1–2)":"Payroll RTI submissions for up to 2 employees.",
-        "Payroll add-on (additional employees)":"£4 per additional employee per month.",
-        "Auto-enrolment pension administration":"Setup/assessment and ongoing submissions.",
-        "VAT Returns (averaged monthly)":"MTD VAT return preparation and filing.",
-        "Bookkeeping removed":"Discount if you keep your own books.",
-        "Single director SA removed":"Discount if director SA is handled elsewhere.",
-        "Year-end compliance package (bookkeeping done for that year)":"Completed year compliance.",
-        "Year-end compliance package (no bookkeeping for that year)":"Completed year compliance (we’ll also process bookkeeping)."
-      };
-      return map[label] || " ";
-    }
-
     function Quote({s,onBack}){
       const q = calcPricing(s);
       const printQuote = ()=>window.print();
@@ -1256,30 +1120,6 @@
       const showLtdNote = (s.who==="limited");
       const showPshipNote = (s.who==="partnership" && s.bkDoWeDoIt);
       const showAnyNote = showLtdNote || showPshipNote;
-
-      const copyQuote = ()=>{
-        const lines = [];
-        lines.push(`SBX Quote`);
-        lines.push(`====================`);
-        lines.push(`${entityLabel(s)}`);
-        lines.push(`Monthly: ${currency(q.monthlyTotal)}/mo`);
-        if(q.oneOffTotal>0) lines.push(`One-off: ${currency(q.oneOffTotal)}`);
-        lines.push(``);
-        if(q.monthly.length){
-          lines.push(`Monthly items:`);
-          q.monthly.forEach(l=>lines.push(` - ${l.label}${l.note?` — ${l.note}`:''}: ${currency(l.amount)}/mo`));
-          lines.push(`Total monthly: ${currency(q.monthlyTotal)}/mo`);
-          lines.push(``);
-        }
-        if(q.oneoff.length){
-          lines.push(`One-off items:`);
-          q.oneoff.forEach(l=>lines.push(` - ${l.label}${l.note?` — ${l.note}`:''}: ${currency(l.amount)}`));
-          lines.push(`Total one-off: ${currency(q.oneOffTotal)}`);
-          lines.push(``);
-        }
-        lines.push(`Share link: ${window.location.href}`);
-        navigator.clipboard.writeText(lines.join("\n"));
-      };
 
       return (
         <div className="print-area">
@@ -1299,7 +1139,7 @@
                     {q.monthly.map((l,i)=>{
                       const isNeg = (l.amount||0) < 0;
                       return (
-                        <li key={i} className="flex items-start justify-between gap-4 border-b pb-2 tip" title={priceHelpFor(l.label)}>
+                        <li key={i} className="flex items-start justify-between gap-4 border-b pb-2">
                           <div>
                             <p className="font-medium">{l.label}</p>
                             {l.note && <p className="text-xs text-[var(--sbx-mute)] mt-0.5">{l.note}</p>}
@@ -1325,7 +1165,7 @@
                 ):(
                   <ul className="space-y-2">
                     {q.oneoff.map((l,i)=>(
-                      <li key={i} className="flex items-start justify-between gap-4 border-b pb-2 tip" title={priceHelpFor(l.label)}>
+                      <li key={i} className="flex items-start justify-between gap-4 border-b pb-2">
                         <div>
                           <p className="font-medium">{l.label}</p>
                           {l.note && <p className="text-xs text-[var(--sbx-mute)] mt-0.5">{l.note}</p>}
@@ -1357,13 +1197,9 @@
             <div className="flex flex-wrap gap-3 items-center">
               <button className="px-5 py-2 rounded-xl border font-semibold" onClick={onBack}>Back</button>
               <button className="px-5 py-2 rounded-xl bg-[var(--sbx-blue)] text-white font-semibold" onClick={printQuote}>Print</button>
-              <button className="px-5 py-2 rounded-xl border font-semibold" onClick={copyQuote}>Copy quote</button>
               <a className="px-5 py-2 rounded-xl border font-semibold"
                  href="mailto:info@sbxaccountants.com?subject=New%20SBX%20Quote%20for%20follow-up&body=Hi%20SBX%20team%2C%0A%0AI%27ve%20generated%20a%20quote%20using%20the%20SBX%20Quote%20Builder.%20I%27ve%20attached%20the%20PDF%20for%20your%20review.%0A%0A(Use%20the%20Print%20button%20and%20choose%20%22Save%20as%20PDF%22%20to%20attach.)%0A%0AName%3A%20%0ACompany%2FStatus%3A%20%0AContact%3A%20%0ANotes%3A%20%0A"
                  target="_blank" rel="noopener">Email SBX</a>
-              <button className="px-5 py-2 rounded-xl border font-semibold"
-                onClick={()=>navigator.clipboard.writeText(window.location.href)}
-              >Copy share link</button>
               <span className="text-xs text-[var(--sbx-mute)]">Tip: use “Print” → “Save as PDF”, then attach it to the email.</span>
             </div>
           </div>
@@ -1374,94 +1210,9 @@
     function App(){
       const s = useQuoteState();
       const [page,setPage]=React.useState(1);
-
-      // 1) Load from URL or localStorage on first mount
-      const initedRef = React.useRef(false);
-      React.useEffect(()=>{
-        if(initedRef.current) return;
-        initedRef.current = true;
-        const urlParams = new URLSearchParams(window.location.search);
-        const stateStr = urlParams.get("state");
-        let loaded = null;
-        if(stateStr) loaded = decodeState(stateStr);
-        if(!loaded){
-          try{ loaded = JSON.parse(localStorage.getItem(LS_KEY) || "null"); }catch(e){}
-        }
-        if(loaded && typeof loaded==="object"){
-          // Apply loaded values
-          const apply = (k, setter)=>{ if(loaded[k]!==undefined) setter(loaded[k]); };
-          apply("who", s.setWho);
-          apply("companyType", s.setCompanyType);
-          apply("tierKey", s.setTierKey);
-          apply("isTrades", s.setIsTrades);
-          apply("dormant", s.setDormant);
-          apply("yearEnd", s.setYearEnd);
-          apply("ltdBookkeepingDone", s.setLtdBookkeepingDone);
-          apply("employees", s.setEmployees);
-          apply("spvProperties", s.setSpvProperties);
-          apply("personalProperties", s.setPersonalProperties);
-          apply("includePayroll", s.setIncludePayroll);
-          apply("includeBookkeeping", s.setIncludeBookkeeping);
-          apply("includeSingleSA", s.setIncludeSingleSA);
-          apply("vatRegistered", s.setVatRegistered);
-          apply("vatReturns", s.setVatReturns);
-          apply("isSoleBusiness", s.setIsSoleBusiness);
-          apply("saNonBusiness", s.setSaNonBusiness);
-          apply("saSoleBusiness", s.setSaSoleBusiness);
-          apply("bkDoWeDoIt", s.setBkDoWeDoIt);
-          apply("numPartnersSA", s.setNumPartnersSA);
-          apply("partnershipType", s.setPartnershipType);
-          apply("nonUkPartners", s.setNonUkPartners);
-          apply("additionalDirectorSAs", s.setAdditionalDirectorSAs);
-          apply("formation", s.setFormation);
-          apply("isCISContractor", s.setIsCISContractor);
-          apply("isCISSubcontractor", s.setIsCISSubcontractor);
-          apply("cisMonthlyReturns", s.setCisMonthlyReturns);
-          apply("cisSubbies", s.setCisSubbies);
-          apply("trackCISStatements", s.setTrackCISStatements);
-          apply("personallyOwned", s.setPersonallyOwned);
-          apply("jointlyOwned", s.setJointlyOwned);
-          apply("otherPartnerSA", s.setOtherPartnerSA);
-          apply("ihtReview", s.setIhtReview);
-          apply("trustsWork", s.setTrustsWork);
-          apply("cgtWork", s.setCgtWork);
-          apply("propIncorpReview", s.setPropIncorpReview);
-          apply("p11d", s.setP11d);
-          apply("p11dEmployees", s.setP11dEmployees);
-          apply("dirPayOptimiser", s.setDirPayOptimiser);
-          apply("mortgageAdvice", s.setMortgageAdvice);
-          apply("aePension", s.setAePension);
-        }
-      },[]);
-
-      // 2) Autosave & update URL (debounced)
-      const saveTimer = React.useRef(null);
-      React.useEffect(()=>{
-        const obj = pickState(s);
-        localStorage.setItem(LS_KEY, JSON.stringify(obj));
-        // Debounced update to URL
-        clearTimeout(saveTimer.current);
-        saveTimer.current = setTimeout(()=>{
-          const url = new URL(window.location.href);
-          url.searchParams.set("state", encodeState(obj));
-          window.history.replaceState(null,"",url.toString());
-        }, 300);
-        return ()=>clearTimeout(saveTimer.current);
-      }, [
-        s.who,s.companyType,s.tierKey,s.isTrades,s.dormant,s.yearEnd,s.ltdBookkeepingDone,
-        s.employees,s.spvProperties,s.personalProperties,s.includePayroll,s.includeBookkeeping,
-        s.includeSingleSA,s.vatRegistered,s.vatReturns,s.isSoleBusiness,s.saNonBusiness,s.saSoleBusiness,
-        s.bkDoWeDoIt,s.numPartnersSA,s.partnershipType,s.nonUkPartners,s.additionalDirectorSAs,s.formation,
-        s.isCISContractor,s.isCISSubcontractor,s.cisMonthlyReturns,s.cisSubbies,s.trackCISStatements,
-        s.personallyOwned,s.jointlyOwned,s.otherPartnerSA,s.ihtReview,s.trustsWork,s.cgtWork,
-        s.propIncorpReview,s.p11d,s.p11dEmployees,s.dirPayOptimiser,s.mortgageAdvice,s.aePension
-      ]);
-
-      const q = calcPricing(s);
-
       return (
         <div className="max-w-6xl mx-auto px-4 py-6">
-          <header className="no-print mb-3">
+          <header className="no-print mb-6">
             <div className="flex items-center justify-between">
               <div>
                 <h1 className="text-2xl md:text-3xl font-semibold text-[var(--sbx-blue)]">SBX Quote Builder</h1>
@@ -1470,18 +1221,6 @@
               <span className="text-xs px-2 py-1 rounded-full bg-blue-50 text-[var(--sbx-blue)]">Stage {page} of 2</span>
             </div>
           </header>
-
-          <div className="no-print sticky-pill mb-4">
-            <small>{entityLabel(s)}</small>
-            <span>•</span>
-            <span>{currency(q.monthlyTotal)}/mo</span>
-            {q.oneOffTotal>0 && <span>• One-off {currency(q.oneOffTotal)}</span>}
-            <button
-              className="ml-2 px-2 py-1 rounded-lg bg-white/10 text-white text-xs"
-              onClick={()=>navigator.clipboard.writeText(window.location.href)}
-              title="Copy share link"
-            >Copy link</button>
-          </div>
 
           {page===1 ? <InputsSnake s={s} onNext={()=>setPage(2)} /> : <Quote s={s} onBack={()=>setPage(1)} />}
         </div>
